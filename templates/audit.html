@@ -1,0 +1,134 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div style="max-width: 800px; margin: 0 auto;">
+    <h2 style="margin-bottom: 1.5rem; color: var(--primary-dark);">Nouvel Audit : Dimension Évolutive</h2>
+
+    <div class="card">
+        <!-- IMPORT CSV -->
+        <div
+            style="margin-bottom: 2rem; padding: 1rem; border: 1px dashed #ccc; border-radius: 8px; background-color: #f9f9f9;">
+            <h3 style="margin-top: 0; font-size: 1.1rem;">Import Automatique (CSV)</h3>
+            <form method="POST" action="{{ url_for('import_csv') }}" enctype="multipart/form-data"
+                style="display: flex; gap: 1rem; align-items: center;">
+                <input type="file" name="file" accept=".csv" required class="form-control" style="flex: 1;">
+                <button type="submit" class="btn" style="background-color: #4F46E5; color: white;">
+                    <i class="fa-solid fa-file-csv"></i> Importer
+                </button>
+            </form>
+            <small style="color: #666; display: block; margin-top: 0.5rem;">
+                Colonnes attendues : dep_fournisseur, temps_deploy, arch_modulaire, budget_rd, nb_poc, pue, recyclage,
+                dette_technique, taux_transformation, energie_verte
+            </small>
+        </div>
+
+        <form method="POST" action="{{ url_for('audit') }}">
+
+            <!-- Navigation des Onglets -->
+            <div class="tabs">
+                <button type="button" class="tab-btn active" onclick="openTab(event, 'tab-adapt')">
+                    <i class="fa-solid fa-layer-group"></i> Adaptabilité
+                </button>
+                <button type="button" class="tab-btn" onclick="openTab(event, 'tab-innov')">
+                    <i class="fa-regular fa-lightbulb"></i> Innovation
+                </button>
+                <button type="button" class="tab-btn" onclick="openTab(event, 'tab-green')">
+                    <i class="fa-solid fa-leaf"></i> Durabilité (Green IT)
+                </button>
+            </div>
+
+            <!-- CONTENU ONGLET 1 : ADAPTABILITÉ -->
+            <div id="tab-adapt" class="tab-content active" style="display: block;">
+                <div class="form-group">
+                    <label>Taux de dépendance à un fournisseur unique (%)</label>
+                    <small style="display:block; color:#666; margin-bottom:5px;">Risque de Vendor Lock-in (Cible &lt;
+                        10%)</small>
+                    <input type="number" step="0.1" name="dep_fournisseur" class="form-control" placeholder="Ex: 15"
+                        required>
+                </div>
+                <div class="form-group">
+                    <label>Temps moyen de déploiement (Jours)</label>
+                    <small style="display:block; color:#666; margin-bottom:5px;">Indicateur de flexibilité (Cible &lt;
+                        15 jours)</small>
+                    <input type="number" name="temps_deploy" class="form-control" placeholder="Ex: 20" required>
+                </div>
+                <div class="form-group">
+                    <label>L'architecture est-elle modulaire ?</label>
+                    <select name="arch_modulaire" class="form-control">
+                        <option value="non">Non (Monolithique)</option>
+                        <option value="oui">Oui (Microservices)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Niveau de Dette Technique</label>
+                    <select name="dette_technique" class="form-control">
+                        <option value="faible">Faible</option>
+                        <option value="moyenne" selected>Moyenne</option>
+                        <option value="critique">Critique (Impact Négatif)</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- CONTENU ONGLET 2 : INNOVATION -->
+            <div id="tab-innov" class="tab-content">
+                <div class="form-group">
+                    <label>Budget R&D (% du budget IT)</label>
+                    <small style="display:block; color:#666; margin-bottom:5px;">Cible recommandée > 5%</small>
+                    <input type="number" step="0.1" name="budget_rd" class="form-control" placeholder="Ex: 3.5"
+                        required>
+                </div>
+                <div class="form-group">
+                    <label>Nombre de PoC réussis cette année</label>
+                    <input type="number" name="nb_poc" class="form-control" placeholder="Ex: 1" required>
+                </div>
+                <div class="form-group">
+                    <label>Technologies testées (Optionnel)</label>
+                    <textarea class="form-control" rows="2" placeholder="Ex: IA Générative..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Taux de Transformation PoC -> Prod (%)</label>
+                    <small style="display:block; color:#666; margin-bottom:5px;">Bonus si > 40%</small>
+                    <input type="number" step="0.1" name="taux_transformation_poc" class="form-control"
+                        placeholder="Ex: 45">
+                </div>
+            </div>
+
+            <!-- CONTENU ONGLET 3 : DURABILITÉ -->
+            <div id="tab-green" class="tab-content">
+                <div class="form-group">
+                    <label>PUE (Power Usage Effectiveness)</label>
+                    <small style="display:block; color:#666; margin-bottom:5px;">Cible Green IT &lt; 1.4</small>
+                    <input type="number" step="0.01" name="pue" class="form-control" placeholder="Ex: 1.8" required>
+                </div>
+                <div class="form-group">
+                    <label>Politique de recyclage active ?</label>
+                    <select name="recyclage" class="form-control">
+                        <option value="non">Non</option>
+                        <option value="oui">Oui</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Part d'Énergie Verte (%)</label>
+                    <small style="display:block; color:#666; margin-bottom:5px;">Bonus si > 50%</small>
+                    <input type="number" step="0.1" name="part_energie_verte" class="form-control" placeholder="Ex: 60">
+                </div>
+            </div>
+
+
+
+            <div style="margin-top: 2rem; text-align: right; border-top: 1px solid #eee; padding-top: 1rem;">
+                <button type="submit" class="btn">
+                    <i class="fa-solid fa-chart-pie"></i> Lancer l'Analyse
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Script de secours pour forcer l'affichage du premier onglet -->
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        document.getElementById('tab-adapt').style.display = 'block';
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,759 @@
+/* =========================================
+   1. VARIABLES & RESET
+   ========================================= */
+:root {
+    /* Palette de couleurs Green IT */
+    --primary: #10B981;
+    /* Vert Émeraude */
+    --primary-dark: #059669;
+    /* Vert Foncé (Hover) */
+    --secondary: #ECFDF5;
+    /* Vert très clair (Fonds) */
+
+    /* Couleurs Texte & Fond */
+    --text-dark: #1F2937;
+    /* Gris très foncé */
+    --text-light: #6B7280;
+    /* Gris moyen */
+    --bg-body: #F3F4F6;
+    /* Gris clair (Fond page) */
+    --white: #ffffff;
+
+    /* Ombres & Arrondis */
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    --radius: 12px;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+}
+
+body {
+    background-color: var(--bg-body);
+    color: var(--text-dark);
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    line-height: 1.6;
+}
+
+/* =========================================
+   2. LAYOUT & NAVIGATION
+   ========================================= */
+.container {
+    max-width: 1200px;
+    margin: 2rem auto;
+    padding: 0 1.5rem;
+    flex: 1;
+    /* Pousse le footer vers le bas */
+    width: 100%;
+}
+
+.navbar {
+    background: var(--white);
+    padding: 1rem 5%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: var(--shadow-sm);
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+}
+
+.logo-container {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-weight: 700;
+    font-size: 1.5rem;
+    color: var(--primary-dark);
+}
+
+.logo-img {
+    height: 80px;
+    width: auto;
+}
+
+.nav-links {
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+}
+
+.nav-links a {
+    text-decoration: none;
+    color: var(--text-dark);
+    font-weight: 500;
+    font-size: 0.95rem;
+    transition: color 0.2s;
+}
+
+.nav-links a:hover {
+    color: var(--primary);
+}
+
+.btn-nav {
+    background: var(--primary);
+    color: white !important;
+    padding: 0.6rem 1.2rem;
+    border-radius: var(--radius);
+    transition: background 0.3s !important;
+}
+
+.btn-nav:hover {
+    background: var(--primary-dark);
+}
+
+/* =========================================
+   3. COMPOSANTS GLOBAUX (Boutons, Cartes)
+   ========================================= */
+.card {
+    background: var(--white);
+    border-radius: var(--radius);
+    padding: 2rem;
+    box-shadow: var(--shadow);
+    margin-bottom: 2rem;
+    border: 1px solid rgba(0, 0, 0, 0.02);
+}
+
+.btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0.8rem 1.5rem;
+    background: var(--primary);
+    color: white;
+    border: none;
+    border-radius: var(--radius);
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.2s;
+}
+
+.btn:hover {
+    background: var(--primary-dark);
+    transform: translateY(-1px);
+}
+
+.btn-outline {
+    background: transparent;
+    border: 2px solid var(--primary);
+    color: var(--primary);
+}
+
+.btn-outline:hover {
+    background: var(--secondary);
+}
+
+/* =========================================
+   4. PAGE D'ACCUEIL (Hero & Grid)
+   ========================================= */
+.hero {
+    text-align: center;
+    padding: 5rem 1rem;
+}
+
+.hero h1 {
+    font-size: 3rem;
+    line-height: 1.2;
+    margin-bottom: 1.5rem;
+    color: var(--text-dark);
+}
+
+.hero h1 strong {
+    color: var(--primary);
+}
+
+.features-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 2rem;
+    margin-top: 2rem;
+}
+
+.feature-card {
+    background: var(--white);
+    padding: 2.5rem;
+    border-radius: var(--radius);
+    text-align: center;
+    box-shadow: var(--shadow);
+    transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.feature-card:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--shadow-lg);
+}
+
+.feature-icon {
+    font-size: 2.5rem;
+    color: var(--primary);
+    margin-bottom: 1.5rem;
+    background: var(--secondary);
+    width: 80px;
+    height: 80px;
+    line-height: 80px;
+    border-radius: 50%;
+    display: inline-block;
+}
+
+.feature-card h3 {
+    margin-bottom: 1rem;
+    font-size: 1.25rem;
+}
+
+.feature-card p {
+    color: var(--text-light);
+    font-size: 0.95rem;
+}
+
+/* =========================================
+   5. AUTHENTIFICATION (Login/Register)
+   ========================================= */
+.auth-container {
+    max-width: 420px;
+    margin: 3rem auto;
+}
+
+.social-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    padding: 0.8rem;
+    margin-bottom: 0.8rem;
+    border: 1px solid #e5e7eb;
+    border-radius: var(--radius);
+    background: white;
+    color: var(--text-dark);
+    text-decoration: none;
+    font-weight: 500;
+    transition: background 0.2s;
+}
+
+.social-btn:hover {
+    background-color: #f9fafb;
+    border-color: #d1d5db;
+}
+
+.social-btn i {
+    margin-right: 12px;
+    font-size: 1.1rem;
+}
+
+.divider {
+    display: flex;
+    align-items: center;
+    text-align: center;
+    margin: 1.5rem 0;
+    color: var(--text-light);
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.divider::before,
+.divider::after {
+    content: '';
+    flex: 1;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.divider::before {
+    margin-right: .5em;
+}
+
+.divider::after {
+    margin-left: .5em;
+}
+
+/* Formulaires */
+.form-group {
+    margin-bottom: 1.2rem;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+    color: var(--text-dark);
+    font-size: 0.95rem;
+}
+
+.form-control {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border: 1px solid #d1d5db;
+    border-radius: var(--radius);
+    font-size: 1rem;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.form-control:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px var(--secondary);
+}
+
+/* =========================================
+   6. FORMULAIRE D'AUDIT (Onglets)
+   ========================================= */
+.tabs {
+    display: flex;
+    gap: 1rem;
+    border-bottom: 2px solid #e5e7eb;
+    margin-bottom: 2rem;
+    overflow-x: auto;
+}
+
+.tab-btn {
+    padding: 1rem 1.5rem;
+    background: none;
+    border: none;
+    font-size: 1rem;
+    font-weight: 500;
+    color: var(--text-light);
+    cursor: pointer;
+    border-bottom: 3px solid transparent;
+    transition: all 0.2s;
+    white-space: nowrap;
+}
+
+.tab-btn:hover {
+    color: var(--primary);
+}
+
+.tab-btn.active {
+    color: var(--primary);
+    border-bottom-color: var(--primary);
+    font-weight: 700;
+}
+
+.tab-btn i {
+    margin-right: 8px;
+}
+
+.tab-content {
+    display: none;
+    animation: fadeIn 0.4s ease-in-out;
+}
+
+.tab-content.active {
+    display: block;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(5px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* =========================================
+   7. DASHBOARD & RÉSULTATS
+   ========================================= */
+.dashboard-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.score-badge {
+    font-size: 2.5rem;
+    font-weight: 800;
+    color: var(--primary);
+    background: var(--secondary);
+    padding: 0.2rem 1.5rem;
+    border-radius: 50px;
+    display: inline-block;
+    line-height: 1;
+}
+
+.alert-box {
+    padding: 1.5rem;
+    border-radius: var(--radius);
+    margin-bottom: 2rem;
+    border-left: 6px solid;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.alert-box h4 {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 1.1rem;
+    margin: 0;
+}
+
+/* Couleurs des Alertes */
+.alert-danger {
+    background: #FEF2F2;
+    color: #991B1B;
+    border-color: #DC2626;
+}
+
+.alert-success {
+    background: #ECFDF5;
+    color: #065F46;
+    border-color: #059669;
+}
+
+.alert-warning {
+    background: #FFFBEB;
+    color: #92400E;
+    border-color: #D97706;
+}
+
+.charts-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+}
+
+@media (max-width: 768px) {
+    .charts-container {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* =========================================
+   8. MATRICE DES RISQUES (NOUVEAU)
+   ========================================= */
+.risk-matrix-container {
+    position: relative;
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 20px;
+    background: #f8fafc;
+    border-radius: var(--radius);
+    border: 1px solid #e5e7eb;
+}
+
+.risk-matrix {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr 1fr;
+    height: 350px;
+    border-left: 3px solid var(--text-dark);
+    border-bottom: 3px solid var(--text-dark);
+    position: relative;
+    background: white;
+    box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.03);
+}
+
+/* Les 4 quadrants */
+.quadrant {
+    border: 1px dashed #e2e8f0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    color: rgba(0, 0, 0, 0.2);
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+/* Couleurs de fond subtiles pour les zones */
+.q-high-impact {
+    background: rgba(220, 38, 38, 0.08);
+}
+
+/* Rouge clair (Critique) */
+.q-high-prob {
+    background: rgba(249, 115, 22, 0.08);
+}
+
+/* Orange clair (Majeur) */
+.q-med {
+    background: rgba(234, 179, 8, 0.08);
+}
+
+/* Jaune clair (Moyen) */
+.q-low {
+    background: rgba(16, 185, 129, 0.08);
+}
+
+/* Vert clair (Faible) */
+
+/* Axes */
+.axis-x {
+    text-align: center;
+    margin-top: 15px;
+    font-weight: 700;
+    color: var(--text-dark);
+    text-transform: uppercase;
+    font-size: 0.9rem;
+}
+
+.axis-y {
+    position: absolute;
+    left: -35px;
+    top: 50%;
+    transform: translateY(-50%) rotate(-90deg);
+    font-weight: 700;
+    color: var(--text-dark);
+    text-transform: uppercase;
+    font-size: 0.9rem;
+}
+
+/* Points de risque (Puces animées) */
+.risk-point {
+    position: absolute;
+    width: 36px;
+    height: 36px;
+    background: #EF4444;
+    /* Rouge vif */
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 10px rgba(220, 38, 38, 0.4);
+    cursor: pointer;
+    font-size: 1.1rem;
+    z-index: 10;
+    transition: transform 0.2s;
+    animation: pulse-red 2s infinite;
+}
+
+.risk-point:hover {
+    transform: scale(1.2);
+    z-index: 20;
+}
+
+/* Positionnement précis des points sur la grille */
+.risk-point.top-right {
+    top: 20%;
+    right: 20%;
+}
+
+/* Prob Forte, Impact Fort */
+.risk-point.top-center {
+    top: 20%;
+    left: 45%;
+}
+
+/* Prob Forte, Impact Moyen */
+.risk-point.center-right {
+    top: 45%;
+    right: 20%;
+}
+
+/* Prob Moyenne, Impact Fort */
+.risk-point.center {
+    top: 45%;
+    left: 45%;
+}
+
+/* Prob Moyenne, Impact Moyen */
+
+/* Info-bulle au survol (Tooltip) */
+.tooltip {
+    visibility: hidden;
+    position: absolute;
+    bottom: 45px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #1F2937;
+    color: white;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    white-space: nowrap;
+    opacity: 0;
+    transition: opacity 0.2s, bottom 0.2s;
+    pointer-events: none;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+}
+
+.risk-point:hover .tooltip {
+    visibility: visible;
+    opacity: 1;
+    bottom: 50px;
+}
+
+/* Animation de pulsation pour attirer l'attention */
+@keyframes pulse-red {
+    0% {
+        box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
+    }
+
+    70% {
+        box-shadow: 0 0 0 10px rgba(239, 68, 68, 0);
+    }
+
+    100% {
+        box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
+    }
+}
+
+/* =========================================
+   9. ÉQUIPE & CHATBOT
+   ========================================= */
+/* ... (Team Grid et Chatbot restent identiques, inclus ci-dessous pour complétude) ... */
+
+.team-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 2rem;
+}
+
+.team-card {
+    background: white;
+    border-radius: var(--radius);
+    padding: 2rem 1rem;
+    text-align: center;
+    box-shadow: var(--shadow);
+    border-top: 4px solid var(--primary);
+    transition: transform 0.2s;
+}
+
+.team-card:hover {
+    transform: translateY(-3px);
+}
+
+.team-avatar {
+    width: 70px;
+    height: 70px;
+    background: var(--secondary);
+    color: var(--primary);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1rem;
+    font-size: 1.8rem;
+    font-weight: bold;
+}
+
+/* Widget Chatbot */
+.chatbot-toggler {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    background: var(--primary);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 60px;
+    height: 60px;
+    cursor: pointer;
+    box-shadow: var(--shadow-lg);
+    font-size: 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2000;
+    transition: transform 0.3s;
+}
+
+.chatbot-toggler:hover {
+    transform: scale(1.1) rotate(10deg);
+}
+
+.chatbot-window {
+    position: fixed;
+    bottom: 100px;
+    right: 30px;
+    width: 380px;
+    height: 500px;
+    background: white;
+    border-radius: var(--radius);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+    display: none;
+    flex-direction: column;
+    z-index: 2000;
+    overflow: hidden;
+    border: 1px solid #e5e7eb;
+}
+
+.chatbot-header {
+    background: var(--primary);
+    color: white;
+    padding: 1rem 1.5rem;
+    font-weight: 600;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.chat-messages {
+    flex: 1;
+    padding: 1.5rem;
+    overflow-y: auto;
+    background: #f9fafb;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.message {
+    max-width: 85%;
+    padding: 0.8rem 1rem;
+    border-radius: 12px;
+    font-size: 0.95rem;
+    line-height: 1.4;
+    word-wrap: break-word;
+}
+
+.bot-msg {
+    background: white;
+    color: var(--text-dark);
+    border: 1px solid #e5e7eb;
+    border-bottom-left-radius: 2px;
+    align-self: flex-start;
+}
+
+.user-msg {
+    background: var(--primary);
+    color: white;
+    border-bottom-right-radius: 2px;
+    align-self: flex-end;
+}
+
+.chat-input {
+    display: flex;
+    border-top: 1px solid #e5e7eb;
+    background: white;
+    padding: 0.5rem;
+}
+
+.chat-input input {
+    flex: 1;
+    padding: 0.8rem;
+    border: none;
+    outline: none;
+    font-size: 0.95rem;
+}
+
+.chat-input button {
+    background: none;
+    border: none;
+    color: var(--primary);
+    padding: 0 1rem;
+    cursor: pointer;
+    font-size: 1.2rem;
+    transition: transform 0.2s;
+}
+
+.chat-input button:hover {
+    transform: scale(1.1);
+}

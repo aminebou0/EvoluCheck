@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="auth-container">
+    <div class="card">
+        <div style="text-align: center; margin-bottom: 1.5rem;">
+            <img src="{{ url_for('static', filename='img/logo.png') }}" alt="Logo" style="height: 120px;"
+                onerror="this.style.display='none'">
+            <h2 style="color: var(--primary-dark); margin-top: 10px;">Bienvenue sur EvoluCheck</h2>
+            <p style="color: var(--text-light);" id="auth-subtitle">Connectez-vous pour accéder aux outils d'audit</p>
+        </div>
+
+        <!-- BOUTONS SOCIAL LOGIN (Visibles sur les deux formulaires) -->
+        <div id="social-login-section">
+            <a href="#" class="social-btn">
+                <i class="fa-brands fa-google" style="color: #DB4437;"></i> Continuer avec Google
+            </a>
+            <a href="#" class="social-btn">
+                <i class="fa-brands fa-linkedin" style="color: #0077B5;"></i> Continuer avec LinkedIn
+            </a>
+            <div class="divider">OU AVEC EMAIL</div>
+        </div>
+
+        <!-- FORMULAIRE DE CONNEXION (Visible par défaut) -->
+        <div id="login-block">
+            <form method="POST" action="{{ url_for('auth') }}">
+                <input type="hidden" name="action" value="login">
+                <div class="form-group">
+                    <label>Adresse Email</label>
+                    <input type="email" name="email" class="form-control" placeholder="exemple@entreprise.com" required>
+                </div>
+                <div class="form-group">
+                    <label>Mot de passe</label>
+                    <input type="password" name="password" class="form-control" placeholder="••••••••" required>
+                </div>
+                <button type="submit" class="btn" style="width: 100%;">Se connecter</button>
+            </form>
+            <p style="color: var(--text-light); font-size: 0.9rem; margin-top: 1rem; text-align: center;">
+                Pas encore de compte ? <a href="javascript:void(0)" onclick="toggleAuth('register')"
+                    style="color: var(--primary); font-weight: bold;">S'inscrire</a>
+            </p>
+        </div>
+
+        <!-- FORMULAIRE D'INSCRIPTION (Caché par défaut) -->
+        <div id="register-block" style="display: none;">
+            <form method="POST" action="{{ url_for('auth') }}">
+                <input type="hidden" name="action" value="register">
+                <div class="form-group">
+                    <label>Nom Complet</label>
+                    <input type="text" name="fullname" class="form-control" placeholder="Prénom Nom" required>
+                </div>
+                <div class="form-group">
+                    <label>Adresse Email</label>
+                    <input type="email" name="email" class="form-control" placeholder="exemple@entreprise.com" required>
+                </div>
+                <div class="form-group">
+                    <label>Mot de passe</label>
+                    <input type="password" name="password" class="form-control" placeholder="••••••••" required>
+                </div>
+                <div class="form-group">
+                    <label>Confirmer le mot de passe</label>
+                    <input type="password" name="confirm_password" class="form-control" placeholder="••••••••" required>
+                </div>
+                <button type="submit" class="btn" style="width: 100%;">Créer mon compte</button>
+            </form>
+            <p style="color: var(--text-light); font-size: 0.9rem; margin-top: 1rem; text-align: center;">
+                Déjà un compte ? <a href="javascript:void(0)" onclick="toggleAuth('login')"
+                    style="color: var(--primary); font-weight: bold;">Se connecter</a>
+            </p>
+        </div>
+
+    </div>
+</div>
+
+<script>
+    function toggleAuth(mode) {
+        const loginBlock = document.getElementById('login-block');
+        const registerBlock = document.getElementById('register-block');
+        const subtitle = document.getElementById('auth-subtitle');
+        const socialSection = document.getElementById('social-login-section');
+
+        if (mode === 'register') {
+            loginBlock.style.display = 'none';
+            registerBlock.style.display = 'block';
+            subtitle.textContent = "Créez votre compte auditeur en quelques secondes";
+            // On peut masquer le social login pour l'inscription pour simplifier, ou le laisser.
+            // socialSection.style.display = 'none'; 
+        } else {
+            loginBlock.style.display = 'block';
+            registerBlock.style.display = 'none';
+            subtitle.textContent = "Connectez-vous pour accéder aux outils d'audit";
+            // socialSection.style.display = 'block';
+        }
+    }
+</script>
+{% endblock %}

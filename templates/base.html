@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EvoluCheck | Audit Dimension 6</title>
+
+    <!-- CSS Personnalisé -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+
+    <!-- FontAwesome (Icônes) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Chart.js (Graphiques) -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body>
+
+    <!-- NAVIGATION -->
+    <nav class="navbar">
+        <div class="logo-container">
+            <img src="{{ url_for('static', filename='img/logo.png') }}" alt="Logo" class="logo-img"
+                onerror="this.style.display='none'">
+            <span>EvoluCheck</span>
+        </div>
+        <div class="nav-links">
+            <a href="{{ url_for('index') }}">Accueil</a>
+            <a href="{{ url_for('about') }}">À propos</a>
+            <a href="{{ url_for('contact') }}">Contact</a>
+            {% if session.get('user') %}
+            <a href="{{ url_for('audit') }}" class="btn-nav">Nouvel Audit</a>
+            <a href="{{ url_for('logout') }}"><i class="fa-solid fa-right-from-bracket"></i></a>
+            {% else %}
+            <a href="{{ url_for('auth') }}" class="btn-nav">Connexion</a>
+            {% endif %}
+        </div>
+    </nav>
+
+    <!-- CONTENU PRINCIPAL (C'est ici que les autres pages s'injectent) -->
+    <div class="container">
+        <!-- Messages Flash (Erreurs/Succès) -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        <div class="flash-messages" style="margin-bottom: 20px;">
+            {% for category, message in messages %}
+            <div class="alert alert-{{ category }}" style="padding: 15px; border-radius: 5px; margin-bottom: 10px; 
+                    background-color: {{ '#fee2e2' if category == 'error' else '#dcfce7' }}; 
+                    color: {{ '#991b1b' if category == 'error' else '#166534' }}; border: 1px solid currentColor;">
+                {{ message }}
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+        {% endwith %}
+
+        {% block content %}{% endblock %}
+    </div>
+
+    <!-- WIDGET CHATBOT IA -->
+    <button class="chatbot-toggler" onclick="toggleChatbot()">
+        <i class="fa-solid fa-robot"></i>
+    </button>
+    <div class="chatbot-window" id="chatbot-window">
+        <div class="chatbot-header">
+            <span>Expert EvoluCheck (IA)</span>
+            <i class="fa-solid fa-times" style="cursor:pointer;" onclick="toggleChatbot()"></i>
+        </div>
+        <div class="chat-messages" id="chat-messages">
+            <div class="message bot-msg">
+                Bonjour ! Je suis l'expert IA d'AuditS2I. Posez-moi une question sur l'adaptabilité ou le Green IT.
+            </div>
+        </div>
+        <div class="chat-input">
+            <input type="text" id="chat-input" placeholder="Écrivez votre question..." onkeypress="handleEnter(event)">
+            <button onclick="sendMessage()"><i class="fa-solid fa-paper-plane"></i></button>
+        </div>
+    </div>
+
+    <!-- PIED DE PAGE -->
+    <footer style="text-align: center; padding: 2rem; color: #6B7280; font-size: 0.9rem;">
+        <p>© 2025 FSJES - Master d'Excellence Audit SII | Encadré par Pr. El-attar Abdelilah</p>
+    </footer>
+
+    <!-- SCRIPTS JS -->
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+</body>
+
+</html>

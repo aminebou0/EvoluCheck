@@ -1,0 +1,739 @@
+import os
+import requests  # Indispensable pour n8n
+from datetime import datetime
+from flask import Flask, render_template, request, redirect, url_for, session, make_response, flash
+from flask_sqlalchemy import SQLAlchemy
+from dotenv import load_dotenv
+from openai import OpenAI
+from fpdf import FPDF
+import pandas as pd
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+import io
+import base64
+import tempfile
+
+# 1. Chargement des variables d'environnement
+load_dotenv()
+
+# 2. Configuration de l'application Flask
+app = Flask(__name__)
+app.config['SECRET_KEY'] = 'audit_s2i_dimension6_secret_key'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///evolucheck.db'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+# Initialisation BDD et Services
+db = SQLAlchemy(app)
+api_key = os.getenv("OPENAI_API_KEY")
+client = OpenAI(api_key=api_key) if api_key else None
+
+# --- MODÈLE DE BASE DE DONNÉES ---
+class Audit(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    date_audit = db.Column(db.DateTime, default=datetime.utcnow)
+    user_email = db.Column(db.String(100))
+    score_adaptabilite = db.Column(db.Float)
+    score_innovation = db.Column(db.Float)
+    score_durabilite = db.Column(db.Float)
+    score_global = db.Column(db.Float)
+    diagnostic_type = db.Column(db.String(20))
+    recommandations = db.Column(db.Text)
+    # Nouveaux KPIs Avancés
+    dette_technique = db.Column(db.String(20)) # 'faible', 'moyenne', 'critique'
+    taux_transformation_poc = db.Column(db.Float) # %
+    part_energie_verte = db.Column(db.Float) # %
+
+# --- LOGIQUE MÉTIER & CALCULS ---
+
+def analyser_risques(inputs):
+    """
+    LOGIQUE MATRICE DE FARMER (PROBABILITÉ x IMPACT)
+    Retourne des coordonnées (1-3) pour placer les points sur la grille.
+    """
+    risques = []
+
+    # Risque 1 : Vendor Lock-in (Dépendance)
+    if inputs['dep'] > 25:
+        risques.append({
+            "nom": "Vendor Lock-in Critique",
+            "prob": 3, "impact": 3 # Zone Rouge (3,3)
+        })
+    elif inputs['dep'] > 10:
+        risques.append({
+            "nom": "Dépendance Fournisseur",
+            "prob": 2, "impact": 2 # Zone Jaune (2,2)
+        })
+
+    # Risque 2 : Obsolescence (Temps de déploiement)
+    if inputs['temps'] > 20:
+        risques.append({
+            "nom": "Obsolescence SI",
+            "prob": 3, "impact": 2 # Zone Orange (3,2)
+        })
+
+    # Risque 3 : Non-conformité Green IT (PUE)
+    if inputs['pue'] > 1.5:
+        risques.append({
+            "nom": "Non-conformité RSE",
+            "prob": 2, "impact": 3 # Zone Orange (2,3)
+        })
+
+    # Risque 4 : Manque d'Innovation
+    if inputs['rd'] < 2:
+        risques.append({
+            "nom": "Perte Compétitivité",
+            "prob": 2, "impact": 2 # Zone Jaune (2,2)
+        })
+
+    return risques
+
+def generer_diagnostic(global_score, s_adapt, s_innov, s_dura, inputs=None):
+    """Génère le constat textuel (FRAP/FRABOP) et des recommandations détaillées"""
+    diag = {}
+    if global_score <= 60:
+        diag['type'] = "FRAP (Problème Majeur)"
+        diag['message'] = "Risque critique d'obsolescence. Le SI ne répond pas aux standards de la Dimension 6."
+        diag['color'] = "danger"
+    elif global_score >= 80:
+        diag['type'] = "FRABOP (Bonne Pratique)"
+        diag['message'] = "Excellente maturité. Le SI est résilient, innovant et durable."
+        diag['color'] = "success"
+    else:
+        diag['type'] = "Constat d'Amélioration"
+        diag['message'] = "Niveau moyen. Des optimisations sont nécessaires pour garantir l'évolution."
+        diag['color'] = "warning"
+
+    # Recommandations ciblées et étendues
+    recos = []
+    
+    # Adaptabilité
+    if s_adapt < 3: 
+        recos.append({"titre": "Urgence Adaptabilité", "texte": "Réduire la dette technique et le temps de déploiement."})
+    if inputs and inputs.get('arch') == 'non':
+        recos.append({"titre": "Architecture Monolithique", "texte": "Migrer progressivement vers une architecture modulaire (Microservices/API) pour gagner en agilité."})
+    if inputs and inputs.get('dette') == 'critique':
+        recos.append({"titre": "Dette Technique Critique", "texte": "Planifier un sprint de refactoring immédiat. La dette technique freine toute évolution."})
+
+    # Innovation
+    if s_innov < 3: 
+        recos.append({"titre": "Déficit Innovation", "texte": "Augmenter le budget R&D (> 5%)."})
+    if inputs and inputs.get('poc', 0) < 2:
+        recos.append({"titre": "Culture de l'Expérimentation", "texte": "Lancer au moins 2 PoC (Proof of Concept) par an pour tester de nouvelles technologies."})
+    if inputs and inputs.get('taux_transfo', 0) < 20:
+        recos.append({"titre": "Transformation des Idées", "texte": "Améliorer le processus d'industrialisation des PoC. Trop d'initiatives restent au stade de prototype."})
+
+    # Durabilité
+    if s_dura < 3: 
+        recos.append({"titre": "Alerte Green IT", "texte": "PUE critique (> 1.4). Audit énergétique requis."})
+    if inputs and inputs.get('rec') == 'non':
+        recos.append({"titre": "Cycle de Vie Matériel", "texte": "Mettre en place une politique de recyclage et d'achat reconditionné pour le matériel IT."})
+    if inputs and inputs.get('energie_verte', 0) < 30:
+        recos.append({"titre": "Transition Énergétique", "texte": "Basculer une partie de l'hébergement vers des fournisseurs d'énergie renouvelable."})
+    
+    diag['recos'] = recos
+    return diag
+
+# --- FONCTION D'ENVOI AUTOMATISÉE N8N ---
+def envoyer_alerte_n8n(data_audit):
+    """
+    Envoie les données de l'audit à n8n via un Webhook.
+    """
+    # 1. VOTRE URL N8N SPÉCIFIQUE
+    N8N_WEBHOOK_URL = "https://magana12.app.n8n.cloud/webhook-test/audit-alert"
+    
+    print(f"--- Tentative d'envoi vers n8n (URL: {N8N_WEBHOOK_URL}) ---")
+    
+    # 2. Préparation des données à envoyer (Payload JSON)
+    # Ajout de l'email pour le coaching IA
+    payload = {
+        "timestamp": datetime.now().isoformat(),
+        "auditeur": data_audit.get('user', 'Inconnu'),
+        "email": data_audit.get('email', 'non-renseigne'), # Pour l'envoi d'email
+        "score_global": data_audit['global'],
+        "diagnostic_type": data_audit['diag']['type'],
+        "message": data_audit['diag']['message'],
+        "scores_detailles": {
+            "adaptabilite": data_audit['scores_radar'][0],
+            "innovation": data_audit['scores_radar'][1],
+            "durabilite": data_audit['scores_radar'][2]
+        },
+        "recommandations": [r['titre'] for r in data_audit['diag'].get('recos', [])],
+        "nombre_risques": len(data_audit.get('risques', [])),
+        # Ajout des données brutes manquantes pour l'IA n8n
+        "rd": data_audit.get('rd'),
+        "pue": data_audit.get('pue'),
+        "dette": data_audit.get('dette'),
+        "dep": data_audit.get('dep'),
+        "temps": data_audit.get('temps'),
+        "arch": data_audit.get('arch'),
+        "poc": data_audit.get('poc'),
+        "rec": data_audit.get('rec'),
+        "taux_transfo": data_audit.get('taux_transfo'),
+        "energie_verte": data_audit.get('energie_verte')
+    }
+    
+    try:
+        # 3. Envoi réel
+        response = requests.post(N8N_WEBHOOK_URL, json=payload)
+        
+        if response.status_code == 200:
+            print("✅ SUCCÈS : n8n a bien reçu les données !")
+        else:
+            print(f"⚠️ AVERTISSEMENT : n8n a répondu avec le code {response.status_code}")
+            # print(f"Réponse n8n : {response.text}")
+            
+    except Exception as e:
+        print(f"❌ ERREUR DE CONNEXION N8N : {e}")
+
+# --- GÉNÉRATION GRAPHIQUES SERVEUR (MATPLOTLIB) ---
+
+def generer_image_radar(scores):
+    """
+    Génère un graphique Radar pour les 3 piliers.
+    Retourne le chemin du fichier temporaire ou un objet BytesIO.
+    """
+    labels = ['Adaptabilité', 'Innovation', 'Durabilité']
+    num_vars = len(labels)
+
+    # Calcul des angles
+    angles = [n / float(num_vars) * 2 * 3.14159 for n in range(num_vars)]
+    angles += angles[:1] # Fermer la boucle
+
+    scores_closed = scores + scores[:1] # Fermer la boucle
+
+    fig, ax = plt.subplots(figsize=(6, 6), subplot_kw=dict(polar=True))
+    
+    # Couleurs personnalisées pour le PDF
+    ax.plot(angles, scores_closed, linewidth=2, linestyle='solid', color='#2E7D32') # Vert foncé
+    ax.fill(angles, scores_closed, '#66BB6A', alpha=0.25) # Vert clair
+    
+    ax.set_yticklabels([])
+    ax.set_xticks(angles[:-1])
+    ax.set_xticklabels(labels, size=12, color='#424242')
+    
+    # Sauvegarde en mémoire
+    img_io = io.BytesIO()
+    plt.savefig(img_io, format='png', bbox_inches='tight', transparent=True)
+    img_io.seek(0)
+    plt.close()
+    return img_io
+
+def generer_image_farmer(risques):
+    """
+    Génère la Matrice de Farmer (3x3) avec les points de risque.
+    """
+    fig, ax = plt.subplots(figsize=(6, 6))
+    
+    # Fond coloré (Zones) - Couleurs plus douces
+    # Zone Verte (Faible)
+    ax.add_patch(plt.Rectangle((1, 1), 1, 1, color='#E8F5E9', alpha=0.9)) # (1,1)
+    ax.add_patch(plt.Rectangle((2, 1), 1, 1, color='#E8F5E9', alpha=0.9)) # (2,1)
+    ax.add_patch(plt.Rectangle((1, 2), 1, 1, color='#E8F5E9', alpha=0.9)) # (1,2)
+    
+    # Zone Jaune (Moyen)
+    ax.add_patch(plt.Rectangle((3, 1), 1, 1, color='#FFFDE7', alpha=0.9)) # (3,1)
+    ax.add_patch(plt.Rectangle((2, 2), 1, 1, color='#FFFDE7', alpha=0.9)) # (2,2)
+    ax.add_patch(plt.Rectangle((1, 3), 1, 1, color='#FFFDE7', alpha=0.9)) # (1,3)
+    
+    # Zone Rouge (Fort)
+    ax.add_patch(plt.Rectangle((3, 2), 1, 1, color='#FFEBEE', alpha=0.9)) # (3,2)
+    ax.add_patch(plt.Rectangle((2, 3), 1, 1, color='#FFEBEE', alpha=0.9)) # (2,3)
+    ax.add_patch(plt.Rectangle((3, 3), 1, 1, color='#FFEBEE', alpha=0.9)) # (3,3)
+
+    # Configuration des axes
+    ax.set_xlim(1, 4)
+    ax.set_ylim(1, 4)
+    ax.set_xticks([1.5, 2.5, 3.5])
+    ax.set_xticklabels(['Faible', 'Moyen', 'Fort'], color='#616161')
+    ax.set_yticks([1.5, 2.5, 3.5])
+    ax.set_yticklabels(['Faible', 'Moyen', 'Fort'], color='#616161')
+    ax.set_xlabel('Impact', color='#424242')
+    ax.set_ylabel('Probabilité', color='#424242')
+    ax.set_title('Matrice de Farmer', color='#2E7D32')
+    
+    # Placement des points
+    for r in risques:
+        # On centre les points dans les cases (ex: niveau 1 -> 1.5)
+        x = r['impact'] + 0.5
+        y = r['prob'] + 0.5
+        # Petit décalage aléatoire pour éviter la superposition si même case (optionnel, ici simple)
+        ax.plot(x, y, marker='o', markersize=12, color='#C62828') # Rouge foncé
+        ax.text(x, y+0.15, r['nom'], fontsize=8, ha='center', color='#424242')
+
+    img_io = io.BytesIO()
+    plt.savefig(img_io, format='png', bbox_inches='tight', transparent=True)
+    img_io.seek(0)
+    plt.close()
+    return img_io
+
+def get_ai_response(msg):
+    """Chatbot Intelligent via OpenAI"""
+    if not client: return "Erreur : Clé API non configurée dans le fichier .env"
+    try:
+        system_prompt = "Tu es l'Expert IA 'EvoluCheck'. Directives : Adaptabilité (Microservices), Innovation (R&D > 5%), Durabilité (PUE < 1.4). Sois concis et professionnel."
+        response = client.chat.completions.create(
+            model="gpt-3.5-turbo",
+            messages=[{"role": "system", "content": system_prompt}, {"role": "user", "content": msg}],
+            temperature=0.7, max_tokens=150
+        )
+        return response.choices[0].message.content
+    except Exception as e: return f"Erreur IA : {str(e)}"
+
+# --- ROUTES DE NAVIGATION ---
+
+@app.route('/')
+def index():
+    return render_template('index.html')
+
+@app.route('/about')
+def about():
+    team = ["BOUBOU Mohammed Amine", "EL-BAKKALI Aya", "AMHAJJAR Hiba", "FARAJI Nouhaila", "ZIANI Mariyam", "ZERHOUNI Amina", "RAHMANI Said", "LAMRHILI Imad-eddine"]
+    return render_template('about.html', team=team)
+
+@app.route('/contact')
+def contact():
+    return render_template('contact.html')
+
+# --- AUTHENTIFICATION ---
+
+@app.route('/auth', methods=['GET', 'POST'])
+def auth():
+    if request.method == 'POST':
+        action = request.form.get('action')
+        email = request.form.get('email')
+        
+        if action == 'register':
+            session['user'] = request.form.get('fullname') # Stockage du nom
+            session['email'] = email # Stockage de l'email pour n8n
+        else:
+            session['user'] = email.split('@')[0] # Stockage d'un pseudo
+            session['email'] = email # Stockage de l'email pour n8n
+            
+        return redirect(url_for('audit'))
+    return render_template('auth.html')
+
+@app.route('/logout')
+def logout():
+    session.clear()
+    return redirect(url_for('index'))
+
+# --- CŒUR DE L'APPLICATION : AUDIT & DASHBOARD ---
+
+@app.route('/audit', methods=['GET', 'POST'])
+def audit():
+    if 'user' not in session: return redirect(url_for('auth'))
+    
+    if request.method == 'POST':
+        # 1. Récupération des données du formulaire
+        dep = float(request.form.get('dep_fournisseur', 0))
+        temps = int(request.form.get('temps_deploy', 30))
+        arch = request.form.get('arch_modulaire')
+        
+        rd = float(request.form.get('budget_rd', 0))
+        poc = int(request.form.get('nb_poc', 0))
+        
+        pue = float(request.form.get('pue', 2.0))
+        rec = request.form.get('recyclage')
+
+        # Nouveaux KPIs
+        dette = request.form.get('dette_technique', 'moyenne')
+        taux_transfo = float(request.form.get('taux_transformation_poc', 0))
+        energie_verte = float(request.form.get('part_energie_verte', 0))
+
+        # 2. Calcul des Scores (Logique métier)
+        # Adaptabilité (Inversé pour le temps : moins c'est mieux)
+        score_a = (2 if dep < 10 else 1) + (2 if temps <= 7 else (1 if temps <= 15 else 0)) + (1 if arch == 'oui' else 0)
+        if dette == 'critique': score_a -= 1 # Pénalité Dette Technique
+
+        # Innovation (Plafonné pour PoC)
+        score_i = (3 if rd >= 5 else (1 if rd >= 2 else 0)) + min(poc, 2)
+        if taux_transfo > 40: score_i = min(score_i + 1, 5) # Bonus Transformation
+
+        # Durabilité (Green IT)
+        score_d = (3 if pue <= 1.4 else (1 if pue <= 1.6 else 0)) + (2 if rec == 'oui' else 0)
+        if energie_verte > 50: score_d = min(score_d + 1, 5) # Bonus Énergie Verte
+
+        # Score Global sur 100
+        global_score = round(((score_a + score_i + score_d) / 15) * 100, 1)
+        
+        # 3. Génération des analyses
+        inputs = {'dep': dep, 'temps': temps, 'arch': arch, 'rd': rd, 'poc': poc, 'pue': pue, 'rec': rec, 'dette': dette, 'taux_transfo': taux_transfo, 'energie_verte': energie_verte}
+        diag = generer_diagnostic(global_score, score_a, score_i, score_d, inputs)
+        
+        risques = analyser_risques(inputs) # Appel à la nouvelle fonction Farmer
+
+        # 4. Stockage en session
+        session['last_audit'] = {
+            'scores_radar': [score_a, score_i, score_d],
+            'global': global_score,
+            'diag': diag,
+            'risques': risques,
+            'date': datetime.now().strftime("%d/%m/%Y"),
+            'user': session.get('user', 'Anonyme'),
+            'email': session.get('email', 'non-renseigne'), # Ajout Email
+            # Données Brutes pour le Rapport
+            'dep': dep, 'temps': temps, 'arch': arch,
+            'rd': rd, 'poc': poc,
+            'pue': pue, 'rec': rec,
+            'dette': dette, 'taux_transfo': taux_transfo, 'energie_verte': energie_verte
+        }
+        
+        # 5. DÉCLENCHEMENT DE L'AUTOMATISATION N8N
+        envoyer_alerte_n8n(session['last_audit'])
+        
+        return redirect(url_for('dashboard'))
+
+    return render_template('audit.html')
+
+@app.route('/import_csv', methods=['POST'])
+def import_csv():
+    if 'file' not in request.files:
+        flash("Aucun fichier sélectionné.", "error")
+        return redirect(url_for('audit'))
+    
+    file = request.files['file']
+    if file.filename == '':
+        flash("Nom de fichier vide.", "error")
+        return redirect(url_for('audit'))
+
+    if file:
+        try:
+            # Lecture du CSV
+            df = pd.read_csv(file)
+            
+            last_audit_data = None
+            
+            # Itération sur chaque ligne
+            for index, row in df.iterrows():
+                try:
+                    # Extraction des données (avec valeurs par défaut si manquant)
+                    dep = float(row.get('dep_fournisseur', 0))
+                    temps = int(row.get('temps_deploy', 30))
+                    arch = str(row.get('arch_modulaire', 'non')).lower()
+                    
+                    rd = float(row.get('budget_rd', 0))
+                    poc = int(row.get('nb_poc', 0))
+                    
+                    pue = float(row.get('pue', 2.0))
+                    rec = str(row.get('recyclage', 'non')).lower()
+
+                    # Nouveaux KPIs Import
+                    dette = str(row.get('dette_technique', 'moyenne')).lower()
+                    taux_transfo = float(row.get('taux_transformation', 0))
+                    energie_verte = float(row.get('energie_verte', 0))
+
+                    # --- MÊME LOGIQUE DE CALCUL QUE /audit ---
+                    # Adaptabilité
+                    score_a = (2 if dep < 10 else 1) + (2 if temps <= 7 else (1 if temps <= 15 else 0)) + (1 if arch == 'oui' else 0)
+                    if dette == 'critique': score_a -= 1
+
+                    # Innovation
+                    score_i = (3 if rd >= 5 else (1 if rd >= 2 else 0)) + min(poc, 2)
+                    if taux_transfo > 40: score_i = min(score_i + 1, 5)
+
+                    # Durabilité
+                    score_d = (3 if pue <= 1.4 else (1 if pue <= 1.6 else 0)) + (2 if rec == 'oui' else 0)
+                    if energie_verte > 50: score_d = min(score_d + 1, 5)
+
+                    global_score = round(((score_a + score_i + score_d) / 15) * 100, 1)
+                    
+                    inputs = {'dep': dep, 'temps': temps, 'arch': arch, 'rd': rd, 'poc': poc, 'pue': pue, 'rec': rec, 'dette': dette, 'taux_transfo': taux_transfo, 'energie_verte': energie_verte}
+                    diag = generer_diagnostic(global_score, score_a, score_i, score_d, inputs)
+                    
+                    # Création de l'objet Audit pour la BDD
+                    new_audit = Audit(
+                        user_email=session.get('user', 'Anonyme'),
+                        score_adaptabilite=score_a,
+                        score_innovation=score_i,
+                        score_durabilite=score_d,
+                        score_global=global_score,
+                        diagnostic_type=diag['type'],
+                        recommandations=str(diag['recos']),
+                        dette_technique=dette,
+                        taux_transformation_poc=taux_transfo,
+                        part_energie_verte=energie_verte
+                    )
+                    db.session.add(new_audit)
+
+                    # Préparation des données pour la session (on gardera la dernière ligne pour le dashboard)
+                    risques = analyser_risques(inputs)
+
+                    last_audit_data = {
+                        'scores_radar': [score_a, score_i, score_d],
+                        'global': global_score,
+                        'diag': diag,
+                        'risques': risques,
+                        'date': datetime.now().strftime("%d/%m/%Y"),
+                        'user': session.get('user', 'Anonyme'),
+                        'email': session.get('email', 'non-renseigne'), # Ajout Email
+                        # Données Brutes
+                        'dep': dep, 'temps': temps, 'arch': arch,
+                        'rd': rd, 'poc': poc,
+                        'pue': pue, 'rec': rec,
+                        'dette': dette, 'taux_transfo': taux_transfo, 'energie_verte': energie_verte
+                    }
+                
+                except Exception as e:
+                    print(f"Erreur traitement ligne {index}: {e}")
+                    continue # On passe à la ligne suivante en cas d'erreur
+            
+            # Commit unique à la fin pour valider tous les enregistrements
+            db.session.commit()
+            print(f"✅ Import terminé. {index + 1 if 'index' in locals() else 0} lignes traitées.")
+            
+            # Mise à jour de la session avec le dernier audit traité
+            if last_audit_data:
+                session['last_audit'] = last_audit_data
+                envoyer_alerte_n8n(session['last_audit'])
+                flash("Import CSV réussi ! Redirection vers le tableau de bord.", "success")
+                return redirect(url_for('dashboard'))
+            else:
+                flash("Aucune donnée valide trouvée dans le CSV.", "error")
+                return redirect(url_for('audit'))
+
+        except Exception as e:
+            print(f"❌ Erreur Import CSV Global : {e}")
+            flash(f"Erreur lors de l'import : {str(e)}", "error")
+            return redirect(url_for('audit'))
+
+@app.route('/dashboard')
+def dashboard():
+    if 'last_audit' not in session: return redirect(url_for('audit'))
+    return render_template('dashboard.html', data=session['last_audit'])
+
+@app.route('/api/chat', methods=['POST'])
+def chat_api():
+    data = request.get_json()
+    return {"response": get_ai_response(data.get('message'))}
+
+# --- EXPORT PDF (DESIGN MINIMALISTE) ---
+
+@app.route('/export_pdf')
+def export_pdf():
+    if 'last_audit' not in session: return redirect(url_for('audit'))
+    data = session['last_audit']
+    
+    # Génération des images
+    radar_img = generer_image_radar(data['scores_radar'])
+    farmer_img = generer_image_farmer(data['risques'])
+    
+    class PDF(FPDF):
+        def header(self):
+            # 4) Barre verte minimaliste (5mm)
+            self.set_fill_color(46, 125, 50) # #2E7D32
+            self.rect(0, 0, 210, 5, 'F')
+            self.ln(10)
+
+        def footer(self):
+            # 8) Footer discret
+            self.set_y(-15)
+            self.set_font('Arial', '', 9)
+            self.set_text_color(117, 117, 117) # #757575
+            self.cell(0, 10, f'EvoluCheck | Rapport d\'Audit - 2025 | Page {self.page_no()}', 0, 0, 'C')
+
+        def chapter_title(self, label):
+            # Titres Vert Foncé (#2E7D32)
+            self.set_font('Arial', 'B', 16)
+            self.set_text_color(46, 125, 50)
+            self.cell(0, 10, label, 0, 1, 'L')
+            self.ln(4)
+
+        def chapter_subtitle(self, label):
+            # Sous-titres Gris Foncé (#424242)
+            self.set_font('Arial', 'B', 14)
+            self.set_text_color(66, 66, 66)
+            self.cell(0, 10, label, 0, 1, 'L')
+            self.ln(2)
+
+        def body_text(self, txt):
+            # Corps de texte Gris 60% (#616161)
+            self.set_font('Arial', '', 11)
+            self.set_text_color(97, 97, 97)
+            self.multi_cell(0, 6, txt)
+            self.ln()
+
+        def draw_card(self, x, y, w, h, title, value):
+            # Carte minimaliste
+            self.set_draw_color(224, 224, 224) # Gris très léger
+            self.set_fill_color(255, 255, 255) # Blanc
+            self.rect(x, y, w, h, 'DF')
+            
+            # Titre Carte
+            self.set_xy(x, y + 5)
+            self.set_font('Arial', '', 10)
+            self.set_text_color(46, 125, 50) # Vert
+            self.cell(w, 5, title, 0, 1, 'C')
+            
+            # Valeur Carte
+            self.set_xy(x, y + 15)
+            self.set_font('Arial', 'B', 16)
+            self.set_text_color(66, 66, 66) # Gris foncé
+            self.cell(w, 10, str(value), 0, 1, 'C')
+
+    pdf = PDF()
+    pdf.set_margins(25, 25, 25) # 6) Marges 25mm
+    pdf.add_page()
+    
+    # 5) Page de Garde
+    pdf.ln(10)
+    pdf.set_font('Arial', 'B', 22)
+    pdf.set_text_color(46, 125, 50) # #2E7D32
+    pdf.cell(0, 10, "Rapport d'Audit - EvoluCheck", 0, 1, 'C')
+    
+    # Ligne fine
+    pdf.set_draw_color(224, 224, 224) # Gris clair
+    pdf.line(25, 55, 185, 55)
+    pdf.ln(20)
+    
+    # Infos
+    pdf.set_font('Arial', '', 11)
+    pdf.set_text_color(97, 97, 97)
+    pdf.cell(0, 8, f"Date de l'audit : {data['date']}", 0, 1, 'C')
+    pdf.cell(0, 8, f"Auditeur : {data['user']}", 0, 1, 'C')
+    pdf.ln(15)
+
+    # Cartes de Scores (Alignées)
+    y_cards = pdf.get_y()
+    card_w = 35
+    gap = 5
+    start_x = (210 - (4 * card_w + 3 * gap)) / 2 # Centrage
+    
+    pdf.draw_card(start_x, y_cards, card_w, 35, "Global", f"{data['global']}/100")
+    pdf.draw_card(start_x + card_w + gap, y_cards, card_w, 35, "Adaptabilite", f"{data['scores_radar'][0]}/5")
+    pdf.draw_card(start_x + 2*(card_w + gap), y_cards, card_w, 35, "Innovation", f"{data['scores_radar'][1]}/5")
+    pdf.draw_card(start_x + 3*(card_w + gap), y_cards, card_w, 35, "Durabilite", f"{data['scores_radar'][2]}/5")
+    
+    pdf.ln(45)
+
+    # Diagnostic
+    pdf.chapter_title("Diagnostic Expert")
+    msg = data['diag']['message'].encode('latin-1', 'replace').decode('latin-1')
+    pdf.body_text(msg)
+    pdf.ln(10)
+
+    # Graphiques (Side by Side)
+    y_charts = pdf.get_y()
+    
+    # Radar
+    with tempfile.NamedTemporaryFile(delete=False, suffix='.png') as tmp_radar:
+        tmp_radar.write(radar_img.getvalue())
+        tmp_radar_path = tmp_radar.name
+    pdf.image(tmp_radar_path, x=25, y=y_charts, w=75)
+    os.unlink(tmp_radar_path)
+    
+    # Farmer
+    if data.get('risques'):
+        with tempfile.NamedTemporaryFile(delete=False, suffix='.png') as tmp_farmer:
+            tmp_farmer.write(farmer_img.getvalue())
+            tmp_farmer_path = tmp_farmer.name
+        pdf.image(tmp_farmer_path, x=110, y=y_charts, w=75)
+        os.unlink(tmp_farmer_path)
+    
+    pdf.add_page()
+
+    # Recommandations
+    if data['diag'].get('recos'):
+        pdf.chapter_title("Recommandations Prioritaires")
+        
+        for reco in data['diag']['recos']:
+            titre = reco['titre'].encode('latin-1', 'replace').decode('latin-1')
+            texte = reco['texte'].encode('latin-1', 'replace').decode('latin-1')
+            
+            pdf.chapter_subtitle(f"> {titre}")
+            pdf.body_text(texte)
+            pdf.ln(2)
+        pdf.ln(10)
+
+    # 3) Tableau "Dimension 6"
+    pdf.add_page()
+    pdf.chapter_title("Dimension 6 - Evolutive : Criteres & KPI")
+    pdf.ln(5)
+
+    # Configuration Tableau
+    col_widths = [50, 50, 60] # Total 160
+    headers = ["Sous-dimension", "Criteres", "KPI & Valeurs"]
+    
+    # En-tête (Vert clair #66BB6A)
+    pdf.set_fill_color(102, 187, 106) 
+    pdf.set_text_color(255, 255, 255)
+    pdf.set_font("Arial", 'B', 11)
+    pdf.set_draw_color(255, 255, 255) # Bordures blanches (invisibles)
+    
+    # Centrage du tableau
+    x_table = (210 - sum(col_widths)) / 2
+    pdf.set_x(x_table)
+    
+    for i, h in enumerate(headers):
+        pdf.cell(col_widths[i], 10, h, 1, 0, 'C', True)
+    pdf.ln()
+
+    # Données
+    data_rows = [
+        ("Adaptabilite", "Dependance\nAgilite\nArchitecture", 
+         f"Dep: {data.get('dep', '-')} %\nTemps: {data.get('temps', '-')} j\nArch: {data.get('arch', '-')}\nDette: {data.get('dette', '-')}"),
+        ("Innovation", "R&D\nExperimentation", 
+         f"R&D: {data.get('rd', '-')} %\nPoC: {data.get('poc', '-')}\nTransfo: {data.get('taux_transfo', '-')} %"),
+        ("Durabilite", "Efficience\nCycle de vie", 
+         f"PUE: {data.get('pue', '-')}\nRecyclage: {data.get('rec', '-')}\nEnergie: {data.get('energie_verte', '-')} %")
+    ]
+
+    # Corps du tableau
+    pdf.set_text_color(66, 66, 66) # Gris foncé
+    pdf.set_font("Arial", '', 10)
+    pdf.set_draw_color(240, 240, 240) # Gris très léger pour les bordures
+    
+    for i, row in enumerate(data_rows):
+        # Couleur alternée
+        fill = True if i % 2 != 0 else False
+        pdf.set_fill_color(249, 249, 249) # #F9F9F9
+        
+        pdf.set_x(x_table)
+        
+        # Hauteur dynamique (basée sur le contenu le plus haut)
+        # Ici on fixe une hauteur confortable car on sait ce qu'on a
+        row_height = 25 
+        
+        x_start = pdf.get_x()
+        y_start = pdf.get_y()
+        
+        # Col 1
+        pdf.cell(col_widths[0], row_height, row[0], 1, 0, 'L', fill)
+        
+        # Col 2 (Multi-ligne)
+        pdf.set_xy(x_start + col_widths[0], y_start)
+        # Astuce pour background fill sur multi-cell: dessiner un rect d'abord
+        if fill: pdf.rect(x_start + col_widths[0], y_start, col_widths[1], row_height, 'F')
+        pdf.rect(x_start + col_widths[0], y_start, col_widths[1], row_height) # Bordure
+        
+        pdf.set_xy(x_start + col_widths[0], y_start + 5)
+        lines = row[1].split('\n')
+        for line in lines:
+            pdf.set_x(x_start + col_widths[0])
+            pdf.cell(col_widths[1], 5, line, 0, 1, 'L')
+            
+        # Col 3 (Multi-ligne)
+        pdf.set_xy(x_start + col_widths[0] + col_widths[1], y_start)
+        if fill: pdf.rect(x_start + col_widths[0] + col_widths[1], y_start, col_widths[2], row_height, 'F')
+        pdf.rect(x_start + col_widths[0] + col_widths[1], y_start, col_widths[2], row_height) # Bordure
+        
+        pdf.set_xy(x_start + col_widths[0] + col_widths[1], y_start + 3)
+        lines = row[2].split('\n')
+        for line in lines:
+            pdf.set_x(x_start + col_widths[0] + col_widths[1])
+            pdf.cell(col_widths[2], 5, line, 0, 1, 'L')
+            
+        pdf.set_xy(x_start, y_start + row_height)
+
+    # Output
+    response = make_response(pdf.output(dest='S').encode('latin-1'))
+    response.headers['Content-Type'] = 'application/pdf'
+    response.headers['Content-Disposition'] = 'attachment; filename=rapport_audit_evolucheck.pdf'
+    return response
+
+# Initialisation DB au lancement
+with app.app_context():
+    db.create_all()
+
+if __name__ == '__main__':
+    app.run(debug=True)

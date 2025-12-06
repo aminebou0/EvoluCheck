@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+
+{% block content %}
+<!-- SECTION HÉROS (Bannière Principale) -->
+<section class="hero">
+    <h1>Auditez la Résilience et la Durabilité <br> de votre Système d'Information</h1>
+    
+    <p style="font-size: 1.25rem; color: #6B7280; margin-bottom: 2.5rem; max-width: 800px; margin-left: auto; margin-right: auto;">
+        Une solution experte basée sur la <strong>Dimension 6 (Évolutive)</strong> du référentiel AuditS2I. 
+        Évaluez l'adaptabilité architecturale, la capacité d'innovation et l'empreinte Green IT de votre organisation en quelques clics.
+    </p>
+    
+    <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+        {% if session.get('user') %}
+            <!-- Si connecté -->
+            <a href="{{ url_for('audit') }}" class="btn">
+                <i class="fa-solid fa-play"></i> Lancer un nouvel audit
+            </a>
+        {% else %}
+            <!-- Si non connecté -->
+            <a href="{{ url_for('auth') }}" class="btn">
+                Commencer l'analyse
+            </a>
+            <a href="{{ url_for('about') }}" class="btn btn-outline">
+                Découvrir le projet
+            </a>
+        {% endif %}
+    </div>
+</section>
+
+<!-- SECTION LES 3 PILIERS (Dimension 6) -->
+<section class="features-grid">
+    <!-- Pilier 1 : Adaptabilité -->
+    <div class="feature-card">
+        <i class="fa-solid fa-layer-group feature-icon"></i>
+        <h3>Adaptabilité</h3>
+        <p>Analysez la flexibilité de votre architecture (Microservices vs Monolithe), la maîtrise de la dette technique et réduisez le risque de dépendance fournisseur (<em>Vendor Lock-in</em>).</p>
+    </div>
+
+    <!-- Pilier 2 : Innovation -->
+    <div class="feature-card">
+        <i class="fa-regular fa-lightbulb feature-icon"></i>
+        <h3>Innovation & Veille</h3>
+        <p>Évaluez l'efficacité de votre processus de R&D, la gestion des PoC (Proof of Concept) et l'alignement budgétaire (> 5% du budget IT).</p>
+    </div>
+
+    <!-- Pilier 3 : Durabilité -->
+    <div class="feature-card">
+        <i class="fa-solid fa-leaf feature-icon"></i>
+        <h3>Durabilité (Green IT)</h3>
+        <p>Mesurez votre empreinte écologique numérique, contrôlez votre indicateur PUE (< 1.4) et vérifiez votre conformité aux politiques RSE.</p>
+    </div>
+</section>
+
+<!-- SECTION PIED DE PAGE SIMPLE -->
+<div style="text-align: center; margin-top: 4rem; margin-bottom: 2rem; color: #6B7280;">
+    <p><i class="fa-solid fa-check-circle" style="color: #10B981;"></i> Compatible avec les normes ISO/IEC 23894 et les pratiques FinOps.</p>
+</div>
+{% endblock %}
