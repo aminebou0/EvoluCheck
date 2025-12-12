@@ -6,3 +6,4 @@ fpdf
 requests
 pandas
 matplotlib
+gunicorn
