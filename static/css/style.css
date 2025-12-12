@@ -1,36 +1,42 @@
 /* =========================================
-   1. VARIABLES & RESET
+   1. VARIABLES & RESET (PREMIUM THEME)
    ========================================= */
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
+
 :root {
-    /* Palette de couleurs Green IT */
+    /* Palette Premium "Eco-Tech" */
     --primary: #10B981;
-    /* Vert Émeraude */
-    --primary-dark: #059669;
-    /* Vert Foncé (Hover) */
+    --primary-gradient: linear-gradient(135deg, #10B981 0%, #047857 100%);
+    --primary-dark: #047857;
+
     --secondary: #ECFDF5;
-    /* Vert très clair (Fonds) */
+    --accent: #3B82F6;
+    /* Touche de bleu tech */
 
     /* Couleurs Texte & Fond */
-    --text-dark: #1F2937;
-    /* Gris très foncé */
+    --text-dark: #111827;
     --text-light: #6B7280;
-    /* Gris moyen */
-    --bg-body: #F3F4F6;
-    /* Gris clair (Fond page) */
+    --bg-body: #F0FDF4;
+    /* Vert très très pâle */
     --white: #ffffff;
 
+    /* Glassmorphism */
+    --glass-bg: rgba(255, 255, 255, 0.95);
+    --glass-border: 1px solid rgba(255, 255, 255, 0.4);
+
     /* Ombres & Arrondis */
-    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-    --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-    --radius: 12px;
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.05);
+    --shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.025);
+    --shadow-hover: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    --radius: 16px;
+    --radius-sm: 10px;
 }
 
 * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
-    font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    font-family: 'Outfit', sans-serif;
 }
 
 body {
@@ -55,8 +61,9 @@ body {
 }
 
 .navbar {
-    background: var(--white);
-    padding: 1rem 5%;
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(10px);
+    padding: 1.2rem 5%;
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -64,6 +71,7 @@ body {
     position: sticky;
     top: 0;
     z-index: 1000;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.03);
 }
 
 .logo-container {
@@ -114,33 +122,42 @@ body {
    3. COMPOSANTS GLOBAUX (Boutons, Cartes)
    ========================================= */
 .card {
-    background: var(--white);
+    background: var(--glass-bg);
     border-radius: var(--radius);
-    padding: 2rem;
+    padding: 2.5rem;
     box-shadow: var(--shadow);
     margin-bottom: 2rem;
-    border: 1px solid rgba(0, 0, 0, 0.02);
+    border: var(--glass-border);
+    backdrop-filter: blur(10px);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.card:hover {
+    box-shadow: var(--shadow-hover);
+    transform: translateY(-2px);
 }
 
 .btn {
     display: inline-flex;
     align-items: center;
-    gap: 8px;
-    padding: 0.8rem 1.5rem;
-    background: var(--primary);
+    gap: 10px;
+    padding: 0.8rem 1.8rem;
+    background: var(--primary-gradient);
     color: white;
     border: none;
-    border-radius: var(--radius);
+    border-radius: var(--radius-sm);
     cursor: pointer;
     font-size: 1rem;
     font-weight: 600;
     text-decoration: none;
-    transition: all 0.2s;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.3);
 }
 
 .btn:hover {
-    background: var(--primary-dark);
-    transform: translateY(-1px);
+    transform: translateY(-2px);
+    box-shadow: 0 10px 15px -3px rgba(16, 185, 129, 0.4);
+    filter: brightness(1.05);
 }
 
 .btn-outline {
@@ -754,6 +771,145 @@ body {
     transition: transform 0.2s;
 }
 
-.chat-input button:hover {
-    transform: scale(1.1);
+/* =========================================
+   10. ANIMATIONS & ELEMENTS SPECIFIQUES
+   ========================================= */
+
+/* Animation d'entrée */
+.fade-up {
+    opacity: 0;
+    transform: translateY(20px);
+    animation: fadeUpAnim 0.6s ease-out forwards;
+}
+
+@keyframes fadeUpAnim {
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Grille Farmer Améliorée */
+.risk-matrix-wrapper {
+    background: white;
+    border-radius: var(--radius-sm);
+    box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.05);
+    padding: 5px;
+}
+
+.farmer-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: repeat(3, 1fr);
+    width: 100%;
+    height: 100%;
+    gap: 4px;
+    background: transparent;
+}
+
+.farmer-grid>div {
+    border-radius: 6px;
+    transition: opacity 0.3s;
+}
+
+.farmer-grid>div:hover {
+    opacity: 0.8;
+}
+
+.zone-green {
+    background: rgba(16, 185, 129, 0.15);
+    border: 1px dashed rgba(16, 185, 129, 0.3);
+}
+
+.zone-yellow {
+    background: rgba(245, 158, 11, 0.15);
+    border: 1px dashed rgba(245, 158, 11, 0.3);
+}
+
+.zone-orange {
+    background: rgba(249, 115, 22, 0.15);
+    border: 1px dashed rgba(249, 115, 22, 0.3);
+}
+
+.zone-red {
+    background: rgba(239, 68, 68, 0.15);
+    border: 1px dashed rgba(239, 68, 68, 0.3);
+}
+
+.axis-label-x {
+    position: absolute;
+    bottom: -25px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 0.75rem;
+    letter-spacing: 1px;
+    color: var(--text-light);
+    font-weight: 700;
+}
+
+.axis-label-y {
+    position: absolute;
+    left: -25px;
+    top: 50%;
+    transform: rotate(-90deg) translateX(50%);
+    font-size: 0.75rem;
+    letter-spacing: 1px;
+    color: var(--text-light);
+    font-weight: 700;
+}
+
+.risk-point {
+    position: absolute;
+    width: 24px;
+    height: 24px;
+    background: #EF4444;
+    border: 3px solid white;
+    border-radius: 50%;
+    box-shadow: 0 4px 10px rgba(239, 68, 68, 0.4);
+    transform: translate(-50%, -50%);
+    cursor: pointer;
+    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    z-index: 10;
+}
+
+.risk-point:hover {
+    transform: translate(-50%, -50%) scale(1.5);
+    z-index: 20;
+}
+
+/* Recommandations Stylisées */
+.reco-item {
+    display: flex;
+    gap: 15px;
+    align-items: start;
+    padding: 1.2rem;
+    background: rgba(255, 255, 255, 0.6);
+    border-radius: var(--radius-sm);
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    transition: all 0.2s ease;
+}
+
+.reco-item:hover {
+    background: white;
+    box-shadow: var(--shadow-sm);
+    transform: translateX(5px);
+}
+
+.reco-item i {
+    color: #F59E0B;
+    font-size: 1.2rem;
+    margin-top: 2px;
+}
+
+.reco-item strong {
+    display: block;
+    color: var(--text-dark);
+    margin-bottom: 5px;
+    font-size: 1.05rem;
+}
+
+.reco-item p {
+    margin: 0;
+    color: var(--text-light);
+    font-size: 0.95rem;
 }

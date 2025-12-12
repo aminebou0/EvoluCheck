@@ -20,11 +20,22 @@ load_dotenv()
 # 2. Configuration de l'application Flask
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'audit_s2i_dimension6_secret_key'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///evolucheck.db'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///evolucheck_v2.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 # Initialisation BDD et Services
 db = SQLAlchemy(app)
+from authlib.integrations.flask_client import OAuth
+
+oauth = OAuth(app)
+oauth.register(
+    name='google',
+    client_id=os.getenv('GOOGLE_CLIENT_ID'),
+    client_secret=os.getenv('GOOGLE_CLIENT_SECRET'),
+    server_metadata_url='https://accounts.google.com/.well-known/openid-configuration',
+    client_kwargs={'scope': 'openid email profile'}
+)
+
 api_key = os.getenv("OPENAI_API_KEY")
 client = OpenAI(api_key=api_key) if api_key else None
 
@@ -204,9 +215,9 @@ def generer_image_radar(scores):
 
     fig, ax = plt.subplots(figsize=(6, 6), subplot_kw=dict(polar=True))
     
-    # Couleurs personnalisées pour le PDF
-    ax.plot(angles, scores_closed, linewidth=2, linestyle='solid', color='#2E7D32') # Vert foncé
-    ax.fill(angles, scores_closed, '#66BB6A', alpha=0.25) # Vert clair
+    # Couleurs personnalisées pour le PDF (Nouveau Vert Tech)
+    ax.plot(angles, scores_closed, linewidth=2, linestyle='solid', color='#10B981') # Nouveau Vert
+    ax.fill(angles, scores_closed, '#10B981', alpha=0.20) # Vert transparent
     
     ax.set_yticklabels([])
     ax.set_xticks(angles[:-1])
@@ -270,32 +281,55 @@ def generer_image_farmer(risques):
 def get_ai_response(msg):
     """Chatbot Intelligent via OpenAI"""
     if not client: return "Erreur : Clé API non configurée dans le fichier .env"
+    
+    # Construction du contexte (Récupération du dernier audit s'il existe)
+    last_audit = session.get('last_audit')
+    context_str = ""
+    if last_audit:
+        recos_titres = [r['titre'] for r in last_audit['diag'].get('recos', [])]
+        context_str = f"""
+        [CONTEXTE AUDIT UTILISATEUR]
+        Score Global : {last_audit.get('global')}/100
+        - Adaptabilité : {last_audit['scores_radar'][0]}/5
+        - Innovation : {last_audit['scores_radar'][1]}/5
+        - Durabilité : {last_audit['scores_radar'][2]}/5
+        - Points d'attention : {', '.join(recos_titres)}
+        Réponds en tenant compte de ces résultats pour conseiller l'utilisateur.
+        """
+
     try:
-        system_prompt = "Tu es l'Expert IA 'EvoluCheck'. Directives : Adaptabilité (Microservices), Innovation (R&D > 5%), Durabilité (PUE < 1.4). Sois concis et professionnel."
-        response = client.chat.completions.create(
-            model="gpt-3.5-turbo",
-            messages=[{"role": "system", "content": system_prompt}, {"role": "user", "content": msg}],
-            temperature=0.7, max_tokens=150
+        completion = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {"role": "system", "content": "Tu es un expert en audit de maturité des Systèmes d'Information (Dimension 6). Tes réponses sont professionnelles, concises et orientées action. " + context_str},
+                {"role": "user", "content": msg}
+            ],
+            max_tokens=250
         )
-        return response.choices[0].message.content
-    except Exception as e: return f"Erreur IA : {str(e)}"
+        return completion.choices[0].message.content
+    except Exception as e:
+        return f"Erreur OpenAI : {str(e)}"
 
-# --- ROUTES DE NAVIGATION ---
-
+# --- INTERFACE FLASK (ROUTES) ---
 @app.route('/')
 def index():
     return render_template('index.html')
 
-@app.route('/about')
-def about():
-    team = ["BOUBOU Mohammed Amine", "EL-BAKKALI Aya", "AMHAJJAR Hiba", "FARAJI Nouhaila", "ZIANI Mariyam", "ZERHOUNI Amina", "RAHMANI Said", "LAMRHILI Imad-eddine"]
-    return render_template('about.html', team=team)
+@app.route('/login/google')
+def google_login():
+    redirect_uri = url_for('google_callback', _external=True)
+    return oauth.google.authorize_redirect(redirect_uri)
 
-@app.route('/contact')
-def contact():
-    return render_template('contact.html')
-
-# --- AUTHENTIFICATION ---
+@app.route('/auth/google/callback')
+def google_callback():
+    token = oauth.google.authorize_access_token()
+    user_info = oauth.google.parse_id_token(token, nonce=None)
+    
+    session['user'] = user_info['name']
+    session['email'] = user_info['email']
+    
+    flash(f"Bienvenue, {user_info['name']} !", "success")
+    return redirect(url_for('audit'))
 
 @app.route('/auth', methods=['GET', 'POST'])
 def auth():
@@ -371,7 +405,7 @@ def audit():
             'risques': risques,
             'date': datetime.now().strftime("%d/%m/%Y"),
             'user': session.get('user', 'Anonyme'),
-            'email': session.get('email', 'non-renseigne'), # Ajout Email
+            'email': session.get('email', 'non-renseigne'),
             # Données Brutes pour le Rapport
             'dep': dep, 'temps': temps, 'arch': arch,
             'rd': rd, 'poc': poc,
@@ -386,116 +420,111 @@ def audit():
 
     return render_template('audit.html')
 
-@app.route('/import_csv', methods=['POST'])
-def import_csv():
-    if 'file' not in request.files:
-        flash("Aucun fichier sélectionné.", "error")
+# --- ROUTE SAUVEGARDE MANUELLE ---
+@app.route('/save_audit', methods=['POST'])
+def save_audit():
+    if 'user' not in session: return redirect(url_for('auth'))
+    if 'last_audit' not in session: 
+        flash("Aucun audit à sauvegarder.", "warning")
         return redirect(url_for('audit'))
     
-    file = request.files['file']
-    if file.filename == '':
-        flash("Nom de fichier vide.", "error")
-        return redirect(url_for('audit'))
-
-    if file:
+    data = session['last_audit']
+    user_email = session.get('email')
+    
+    if user_email:
         try:
-            # Lecture du CSV
-            df = pd.read_csv(file)
-            
-            last_audit_data = None
-            
-            # Itération sur chaque ligne
-            for index, row in df.iterrows():
-                try:
-                    # Extraction des données (avec valeurs par défaut si manquant)
-                    dep = float(row.get('dep_fournisseur', 0))
-                    temps = int(row.get('temps_deploy', 30))
-                    arch = str(row.get('arch_modulaire', 'non')).lower()
-                    
-                    rd = float(row.get('budget_rd', 0))
-                    poc = int(row.get('nb_poc', 0))
-                    
-                    pue = float(row.get('pue', 2.0))
-                    rec = str(row.get('recyclage', 'non')).lower()
-
-                    # Nouveaux KPIs Import
-                    dette = str(row.get('dette_technique', 'moyenne')).lower()
-                    taux_transfo = float(row.get('taux_transformation', 0))
-                    energie_verte = float(row.get('energie_verte', 0))
-
-                    # --- MÊME LOGIQUE DE CALCUL QUE /audit ---
-                    # Adaptabilité
-                    score_a = (2 if dep < 10 else 1) + (2 if temps <= 7 else (1 if temps <= 15 else 0)) + (1 if arch == 'oui' else 0)
-                    if dette == 'critique': score_a -= 1
-
-                    # Innovation
-                    score_i = (3 if rd >= 5 else (1 if rd >= 2 else 0)) + min(poc, 2)
-                    if taux_transfo > 40: score_i = min(score_i + 1, 5)
-
-                    # Durabilité
-                    score_d = (3 if pue <= 1.4 else (1 if pue <= 1.6 else 0)) + (2 if rec == 'oui' else 0)
-                    if energie_verte > 50: score_d = min(score_d + 1, 5)
-
-                    global_score = round(((score_a + score_i + score_d) / 15) * 100, 1)
-                    
-                    inputs = {'dep': dep, 'temps': temps, 'arch': arch, 'rd': rd, 'poc': poc, 'pue': pue, 'rec': rec, 'dette': dette, 'taux_transfo': taux_transfo, 'energie_verte': energie_verte}
-                    diag = generer_diagnostic(global_score, score_a, score_i, score_d, inputs)
-                    
-                    # Création de l'objet Audit pour la BDD
-                    new_audit = Audit(
-                        user_email=session.get('user', 'Anonyme'),
-                        score_adaptabilite=score_a,
-                        score_innovation=score_i,
-                        score_durabilite=score_d,
-                        score_global=global_score,
-                        diagnostic_type=diag['type'],
-                        recommandations=str(diag['recos']),
-                        dette_technique=dette,
-                        taux_transformation_poc=taux_transfo,
-                        part_energie_verte=energie_verte
-                    )
-                    db.session.add(new_audit)
-
-                    # Préparation des données pour la session (on gardera la dernière ligne pour le dashboard)
-                    risques = analyser_risques(inputs)
-
-                    last_audit_data = {
-                        'scores_radar': [score_a, score_i, score_d],
-                        'global': global_score,
-                        'diag': diag,
-                        'risques': risques,
-                        'date': datetime.now().strftime("%d/%m/%Y"),
-                        'user': session.get('user', 'Anonyme'),
-                        'email': session.get('email', 'non-renseigne'), # Ajout Email
-                        # Données Brutes
-                        'dep': dep, 'temps': temps, 'arch': arch,
-                        'rd': rd, 'poc': poc,
-                        'pue': pue, 'rec': rec,
-                        'dette': dette, 'taux_transfo': taux_transfo, 'energie_verte': energie_verte
-                    }
-                
-                except Exception as e:
-                    print(f"Erreur traitement ligne {index}: {e}")
-                    continue # On passe à la ligne suivante en cas d'erreur
-            
-            # Commit unique à la fin pour valider tous les enregistrements
+            # Vérifier si cet audit a déjà été sauvegardé récemment (optionnel, pour éviter doublons)
+            # Ici on sauvegarde direct
+            # Adaptation pour les KPIs manquants si nécessaire
+            new_audit = Audit(
+                user_email=user_email,
+                score_adaptabilite=data['scores_radar'][0],
+                score_innovation=data['scores_radar'][1],
+                score_durabilite=data['scores_radar'][2],
+                score_global=data['global'],
+                diagnostic_type=data['diag']['type'],
+                recommandations=str([r['titre'] for r in data['diag'].get('recos', [])]),
+                dette_technique=data.get('dette', '-'),
+                taux_transformation_poc=data.get('taux_transfo', 0),
+                part_energie_verte=data.get('energie_verte', 0)
+            )
+            db.session.add(new_audit)
             db.session.commit()
-            print(f"✅ Import terminé. {index + 1 if 'index' in locals() else 0} lignes traitées.")
-            
-            # Mise à jour de la session avec le dernier audit traité
-            if last_audit_data:
-                session['last_audit'] = last_audit_data
-                envoyer_alerte_n8n(session['last_audit'])
-                flash("Import CSV réussi ! Redirection vers le tableau de bord.", "success")
-                return redirect(url_for('dashboard'))
-            else:
-                flash("Aucune donnée valide trouvée dans le CSV.", "error")
-                return redirect(url_for('audit'))
-
+            flash("Audit sauvegardé avec succès dans l'historique !", "success")
         except Exception as e:
-            print(f"❌ Erreur Import CSV Global : {e}")
-            flash(f"Erreur lors de l'import : {str(e)}", "error")
-            return redirect(url_for('audit'))
+            flash("Erreur lors de la sauvegarde.", "error")
+            print(f"Erreur DB Save: {e}")
+    else:
+        flash("Utilisateur non identifié pour la sauvegarde.", "warning")
+
+    return redirect(url_for('dashboard'))
+
+@app.route('/load_audit/<int:audit_id>')
+def load_audit(audit_id):
+    if 'user' not in session: return redirect(url_for('auth'))
+    user_email = session.get('email')
+    
+    audit = Audit.query.get_or_404(audit_id)
+    
+    # Sécurité : Un utilisateur ne peut charger que ses audits
+    if audit.user_email != user_email:
+        flash("Accès non autorisé à cet audit.", "error")
+        return redirect(url_for('historique'))
+    
+    # Reconstruction des données pour la session
+    # Note: On n'a pas tout stocké en DB (inputs bruts), donc on approxime ou on laisse vide ce qui n'est pas critique
+    # Pour Farmer (Risques), on doit reconstruire une liste approximative ou stocker les risques en JSON string en DB
+    # Solution rapide : on réanalyse les risques basés sur les scores si possible, sinon on laisse vide
+    
+    # Pour afficher la matrice de risques, il nous faut les inputs 'inputs'. 
+    # Or, on ne stocke pas 'dep', 'temps', 'pue', etc. en DB dans ce modèle v2 simplifié pour l'instant.
+    # Amélioration : On va créer des inputs fictifs cohérents avec les scores pour reconstituer l'affichage
+    # C'est une limite actuelle, pour l'instant on met des risques vides ou on améliore le modèle DB plus tard.
+    
+    inputs_fictifs = {
+        'dep': 0, 'temps': 0, 'pue': 0, 'rd': 0 # Valeurs par défaut
+    }
+    
+    # On reconstitue les risques (Réellement il faudrait stocker le JSON complet des risques en DB)
+    risques_reconstitues = analyser_risques(inputs_fictifs)
+
+    session['last_audit'] = {
+        'scores_radar': [audit.score_adaptabilite, audit.score_innovation, audit.score_durabilite],
+        'global': audit.score_global,
+        'diag': {
+            'type': audit.diagnostic_type,
+            'message': 'Audit historique chargé.',
+            'color': 'success' if audit.score_global >= 80 else ('danger' if audit.score_global <= 60 else 'warning'),
+            'recos': [{'titre': r, 'texte': ''} for r in eval(audit.recommandations)] if audit.recommandations else []
+        },
+        'risques': risques_reconstitues, # Sera vide ou basique
+        'date': audit.date_audit.strftime("%d/%m/%Y"),
+        'user': session.get('user'),
+        'email': user_email,
+        # KPIs stockés
+        'dette': audit.dette_technique,
+        'taux_transfo': audit.taux_transformation_poc,
+        'energie_verte': audit.part_energie_verte,
+        # Valeurs par défaut pour éviter erreurs template
+        'dep': 0, 'temps': 0, 'pue': 0, 'rd': 0, 'poc': 0, 'rec': 'non', 'arch': 'non'
+    }
+    
+    flash(f"Audit du {audit.date_audit.strftime('%d/%m/%Y')} chargé dans le tableau de bord.", "info")
+    return redirect(url_for('dashboard'))
+
+@app.route('/historique')
+def historique():
+    if 'user' not in session: return redirect(url_for('auth'))
+    user_email = session.get('email')
+    
+    # Récupérer les audits de l'utilisateur
+    audits = Audit.query.filter_by(user_email=user_email).order_by(Audit.date_audit.desc()).all()
+    
+    # Préparer les données pour le graphique d'évolution
+    dates = [a.date_audit.strftime("%d/%m") for a in audits][::-1] # Ordre chronologique
+    scores = [a.score_global for a in audits][::-1]
+    
+    return render_template('history.html', audits=audits, dates=dates, scores=scores)
 
 @app.route('/dashboard')
 def dashboard():
@@ -507,6 +536,306 @@ def chat_api():
     data = request.get_json()
     return {"response": get_ai_response(data.get('message'))}
 
+def create_pdf_object(data):
+    # Génération des images
+    radar_img = generer_image_radar(data['scores_radar'])
+    farmer_img = generer_image_farmer(data['risques'])
+    
+    logo_path = os.path.join(app.root_path, 'static', 'img', 'logo.png')
+    
+    class PDF(FPDF):
+        def header(self):
+            # En-tête discret (sauf page 1)
+            if self.page_no() > 1:
+                self.set_font('Arial', '', 9)
+                self.set_text_color(150, 150, 150)
+                self.set_xy(10, 10)
+                self.cell(0, 10, 'EvoluCheck - Audit de Maturité 2025', 0, 0, 'L')
+                self.set_xy(10, 18)
+                self.set_draw_color(220, 220, 220)
+                self.line(10, 18, 200, 18)
+                self.ln(15)
+
+        def footer(self):
+            if self.page_no() > 1:
+                self.set_y(-15)
+                self.set_font('Arial', '', 8)
+                self.set_text_color(180, 180, 180)
+                self.cell(0, 10, f'Page {self.page_no()} | Document Confidentiel', 0, 0, 'R')
+
+        # --- COMPOSANTS UI ---
+        
+        def consulting_title(self, label):
+            self.set_font('Arial', 'B', 18)
+            self.set_text_color(16, 185, 129) # Vert Logo (#10B981)
+            self.cell(0, 10, label.upper(), 0, 1, 'L')
+            # Ligne de soulignement
+            self.set_fill_color(5, 150, 105) # Vert Foncé
+            self.rect(self.get_x(), self.get_y(), 20, 1.5, 'F')
+            self.ln(10)
+
+        def consulting_card(self, x, y, w, title, value, icon):
+            # Fond blanc + Bordure
+            self.set_draw_color(229, 231, 235) # Gris clair
+            self.set_fill_color(255, 255, 255)
+            self.rect(x, y, w, 45, 'FD')
+            
+            # Bande supérieure verte
+            self.set_fill_color(16, 185, 129) # Vert Logo
+            self.rect(x, y, w, 2, 'F')
+            
+            # Titre
+            self.set_xy(x, y + 8)
+            self.set_font('Arial', 'B', 10)
+            self.set_text_color(107, 114, 128) # Gris moyen
+            self.cell(w, 5, title.upper(), 0, 1, 'C')
+            
+            # Valeur
+            self.set_xy(x, y + 18)
+            self.set_font('Arial', 'B', 22)
+            self.set_text_color(6, 95, 70) # Vert très foncé
+            self.cell(w, 10, str(value) + "/5", 0, 1, 'C')
+            
+            # Lettre icône fond rond
+            self.set_fill_color(236, 253, 245) # Vert très pâle
+            self.rect(x + w/2 - 5, y + 33, 10, 10, 'F') # "Cercle" carré
+            
+            self.set_xy(x, y + 35)
+            self.set_font('Arial', 'B', 9)
+            self.set_text_color(16, 185, 129)
+            self.cell(w, 6, icon, 0, 0, 'C')
+
+    pdf = PDF()
+    pdf.set_margins(20, 20, 20) # Marges standardisées
+    
+    # ==========================
+    # PAGE 1 : COUVERTURE AVEC LOGO
+    # ==========================
+    pdf.add_page()
+    
+    # Bande Latérale Verte
+    pdf.set_fill_color(6, 78, 59) # Vert Forêt Profond
+    pdf.rect(0, 0, 70, 297, 'F') 
+    
+    # Ligne Accent
+    pdf.set_fill_color(16, 185, 129) # Vert Logo
+    pdf.rect(70, 0, 2, 297, 'F')
+    
+    # Logo (si dispo)
+    if os.path.exists(logo_path):
+        try:
+            # On place le logo sur la partie blanche
+            pdf.image(logo_path, x=90, y=40, w=50) 
+        except: pass
+    
+    # Titre Principal
+    pdf.set_xy(90, 100)
+    pdf.set_font('Arial', 'B', 30)
+    pdf.set_text_color(31, 41, 55) # Gris Anthracite
+    pdf.multi_cell(100, 14, "RAPPORT D'AUDIT\nDE MATURITÉ SI")
+    
+    # Sous-titre
+    pdf.set_xy(90, 140)
+    pdf.set_font('Arial', '', 14)
+    pdf.set_text_color(107, 114, 128)
+    pdf.cell(0, 10, "EvoluCheck Edition 2025", 0, 1)
+    
+    # Bloc Auteur Alignement corrigé
+    pdf.set_xy(90, 220)
+    pdf.set_font('Arial', 'B', 10)
+    pdf.set_text_color(16, 185, 129) # Vert
+    pdf.cell(0, 6, "CONFIDENTIEL", 0, 1)
+    
+    pdf.set_x(90)
+    pdf.set_font('Arial', '', 12)
+    pdf.set_text_color(55, 65, 81)
+    pdf.cell(0, 8, "Réalisé par Hiba Amhajjar", 0, 1)
+    
+    pdf.set_x(90)
+    pdf.set_font('Arial', '', 10)
+    pdf.set_text_color(156, 163, 175)
+    pdf.cell(0, 6, datetime.now().strftime("%d %B %Y"), 0, 1)
+
+    # ==========================
+    # PAGE 2 : SYNTHÈSE
+    # ==========================
+    pdf.add_page()
+    pdf.ln(10)
+    pdf.consulting_title("Synthèse Exécutive")
+    
+    # Jauge Score Global
+    pdf.ln(5)
+    # Fond jauge
+    pdf.set_fill_color(243, 244, 246)
+    pdf.rect(85, 55, 40, 40, 'F')
+    # Score
+    pdf.set_xy(85, 65)
+    pdf.set_font('Arial', 'B', 26)
+    pdf.set_text_color(16, 185, 129) # Vert
+    pdf.cell(40, 10, str(int(data['global'])), 0, 1, 'C')
+    # Label
+    pdf.set_xy(85, 75)
+    pdf.set_font('Arial', '', 9)
+    pdf.set_text_color(107, 114, 128)
+    pdf.cell(40, 10, "/ 100", 0, 1, 'C')
+    
+    pdf.ln(40) # Espace
+
+    # Cards Alignées
+    # Calcul largeur: (210 - 20 - 20 - 2*space) / 3
+    # 170 / 3 ≈ 52
+    card_w = 52
+    space = 6
+    start_x = 22 # Marge gauche un peu décalée pour centrer visuellement
+    y_pos = pdf.get_y()
+    
+    pdf.consulting_card(start_x, y_pos, card_w, "Adaptabilité", data['scores_radar'][0], "A")
+    pdf.consulting_card(start_x + card_w + space, y_pos, card_w, "Innovation", data['scores_radar'][1], "I")
+    pdf.consulting_card(start_x + 2*card_w + 2*space, y_pos, card_w, "Durabilité", data['scores_radar'][2], "D")
+    
+    pdf.ln(60)
+
+    # Section Points Forts
+    pdf.set_fill_color(236, 253, 245) # Fond Vert très clair
+    pdf.rect(20, pdf.get_y(), 170, 45, 'F')
+    
+    pdf.set_xy(25, pdf.get_y() + 5)
+    pdf.set_font('Arial', 'B', 12)
+    pdf.set_text_color(6, 95, 70) # Vert Foncé
+    pdf.cell(0, 8, "Points Forts Identifiés", 0, 1)
+    
+    pdf.set_font('Arial', '', 10)
+    pdf.set_text_color(55, 65, 81)
+    
+    # Génération dynamique des points forts
+    points_forts = []
+    if data['global'] >= 70:
+        points_forts.append(f"Score Global performant ({data['global']}%)")
+    
+    if data['scores_radar'][0] >= 3.5:
+        points_forts.append("Forte Adaptabilité et Agilité du SI")
+    elif data['scores_radar'][0] >= 2.5:
+        points_forts.append("Socle technologique stable")
+        
+    if data['scores_radar'][1] >= 3.5:
+        points_forts.append("Culture de l'Innovation active")
+    
+    if data['scores_radar'][2] >= 3.5:
+        points_forts.append("Démarche Green IT mature")
+    
+    # Fallback si aucun point fort marquant
+    if not points_forts:
+        points_forts.append("Potentiel d'amélioration identifié")
+        points_forts.append("Démarche d'audit volontaire")
+
+    for pf in points_forts:
+        pdf.set_x(30)
+        pdf.cell(5, 6, "+", 0, 0)
+        pdf.cell(0, 6, pf, 0, 1)
+
+    # ==========================
+    # PAGE 3 : DIAGNOSTIC & KPIs
+    # ==========================
+    pdf.add_page()
+    pdf.consulting_title("Détails de la Performance")
+    
+    # En-têtes Tableau
+    # Largeurs: 170 total (page 210 - 20 - 20)
+    headers = [("Indicateur", 60), ("Valeur", 25), ("Statut", 30), ("Analyse", 55)]
+    
+    pdf.set_fill_color(249, 250, 251) # Gris très clair
+    pdf.set_font('Arial', 'B', 9)
+    pdf.set_text_color(55, 65, 81)
+    
+    for label, w in headers:
+        pdf.cell(w, 10, label.upper(), 0, 0, 'L', True)
+    pdf.ln()
+    
+    # Données
+    kpis = [
+        ("Dette Technique", data.get('dette', '-').capitalize(), "Maîtrisée", "Impact faible"),
+        ("Temps Déploiement", f"{data.get('temps', '-')} j", "Conforme", "Processus optimisé"),
+        ("Budget R&D", f"{data.get('rd', '-')} %", "À surveiller", "Sous cible 5%"),
+        ("PUE (Efficience)", str(data.get('pue', '-')), "Critique" if data.get('pue', 0) > 1.5 else "Optimal", "Indicateur clé"),
+        ("Taux Transfo POC", f"{data.get('taux_transfo', 0)}%", "Orange" if data.get('taux_transfo',0)<20 else "Vert", "Passage à l'échelle")
+    ]
+
+    pdf.set_font('Arial', '', 9)
+    for col1, col2, col3, col4 in kpis:
+        pdf.set_draw_color(243, 244, 246)
+        pdf.line(20, pdf.get_y(), 190, pdf.get_y()) # Ligne séparation
+        
+        pdf.cell(60, 12, col1, 0, 0, 'L')
+        pdf.set_font('Arial', 'B', 9)
+        pdf.cell(25, 12, col2, 0, 0, 'L')
+        
+        # Couleur Statut
+        pdf.set_font('Arial', '', 9)
+        if col3 == "Critique": pdf.set_text_color(220, 38, 38) # Rouge
+        elif col3 == "À surveiller": pdf.set_text_color(217, 119, 6) # Orange
+        else: pdf.set_text_color(5, 150, 105) # Vert
+            
+        pdf.cell(30, 12, col3, 0, 0, 'L')
+        
+        pdf.set_text_color(107, 114, 128) # Gris
+        pdf.cell(55, 12, col4, 0, 1, 'L')
+        pdf.set_text_color(55, 65, 81) # Reset Noir
+
+    pdf.ln(10)
+    
+    # Risques
+    pdf.set_font('Arial', 'B', 11)
+    pdf.set_text_color(6, 78, 59)
+    pdf.cell(0, 10, "Points de Vigilance", 0, 1)
+    pdf.set_font('Arial', '', 10)
+    pdf.set_text_color(75, 85, 99)
+    pdf.multi_cell(0, 5, "Surveillance recommandée de l'évolution du PUE et de la dette technique sur les modules legacy.")
+
+    # ==========================
+    # PAGE 4 : PLANS D'ACTION
+    # ==========================
+    pdf.add_page()
+    pdf.consulting_title("Feuille de Route")
+    
+    if not data['diag'].get('recos'):
+        # Carte Aucune Action (Vert)
+        pdf.set_fill_color(236, 253, 245)
+        pdf.set_draw_color(16, 185, 129)
+        pdf.rect(20, pdf.get_y()+5, 170, 30, 'FD')
+        
+        pdf.set_xy(20, pdf.get_y()+15)
+        pdf.set_font('Arial', 'B', 11)
+        pdf.set_text_color(6, 95, 70)
+        pdf.cell(170, 10, "Aucune action prioritaire requise pour le moment.", 0, 0, 'C')
+    else:
+        for reco in data['diag']['recos']:
+            titre = reco['titre'].encode('latin-1', 'replace').decode('latin-1')
+            texte = reco['texte'].encode('latin-1', 'replace').decode('latin-1')
+            
+            # Puce Carrée Verte
+            pdf.set_fill_color(16, 185, 129)
+            pdf.rect(20, pdf.get_y() + 2, 4, 4, 'F')
+            
+            pdf.set_x(30)
+            pdf.set_font('Arial', 'B', 11)
+            pdf.set_text_color(6, 78, 59)
+            pdf.cell(0, 8, titre, 0, 1)
+            
+            pdf.set_x(30)
+            pdf.set_font('Arial', '', 10)
+            pdf.set_text_color(75, 85, 99)
+            pdf.multi_cell(0, 5, texte)
+            pdf.ln(6)
+
+    # PAGE FIN
+    pdf.add_page()
+    pdf.set_y(130)
+    pdf.set_font('Arial', 'B', 20)
+    pdf.set_text_color(16, 185, 129)
+    pdf.cell(0, 10, "EvoluCheck", 0, 1, 'C')
+    
+    return pdf
+
 # --- EXPORT PDF (DESIGN MINIMALISTE) ---
 
 @app.route('/export_pdf')
@@ -514,221 +843,11 @@ def export_pdf():
     if 'last_audit' not in session: return redirect(url_for('audit'))
     data = session['last_audit']
     
-    # Génération des images
-    radar_img = generer_image_radar(data['scores_radar'])
-    farmer_img = generer_image_farmer(data['risques'])
+    pdf = create_pdf_object(data)
     
-    class PDF(FPDF):
-        def header(self):
-            # 4) Barre verte minimaliste (5mm)
-            self.set_fill_color(46, 125, 50) # #2E7D32
-            self.rect(0, 0, 210, 5, 'F')
-            self.ln(10)
-
-        def footer(self):
-            # 8) Footer discret
-            self.set_y(-15)
-            self.set_font('Arial', '', 9)
-            self.set_text_color(117, 117, 117) # #757575
-            self.cell(0, 10, f'EvoluCheck | Rapport d\'Audit - 2025 | Page {self.page_no()}', 0, 0, 'C')
-
-        def chapter_title(self, label):
-            # Titres Vert Foncé (#2E7D32)
-            self.set_font('Arial', 'B', 16)
-            self.set_text_color(46, 125, 50)
-            self.cell(0, 10, label, 0, 1, 'L')
-            self.ln(4)
-
-        def chapter_subtitle(self, label):
-            # Sous-titres Gris Foncé (#424242)
-            self.set_font('Arial', 'B', 14)
-            self.set_text_color(66, 66, 66)
-            self.cell(0, 10, label, 0, 1, 'L')
-            self.ln(2)
-
-        def body_text(self, txt):
-            # Corps de texte Gris 60% (#616161)
-            self.set_font('Arial', '', 11)
-            self.set_text_color(97, 97, 97)
-            self.multi_cell(0, 6, txt)
-            self.ln()
-
-        def draw_card(self, x, y, w, h, title, value):
-            # Carte minimaliste
-            self.set_draw_color(224, 224, 224) # Gris très léger
-            self.set_fill_color(255, 255, 255) # Blanc
-            self.rect(x, y, w, h, 'DF')
-            
-            # Titre Carte
-            self.set_xy(x, y + 5)
-            self.set_font('Arial', '', 10)
-            self.set_text_color(46, 125, 50) # Vert
-            self.cell(w, 5, title, 0, 1, 'C')
-            
-            # Valeur Carte
-            self.set_xy(x, y + 15)
-            self.set_font('Arial', 'B', 16)
-            self.set_text_color(66, 66, 66) # Gris foncé
-            self.cell(w, 10, str(value), 0, 1, 'C')
-
-    pdf = PDF()
-    pdf.set_margins(25, 25, 25) # 6) Marges 25mm
-    pdf.add_page()
-    
-    # 5) Page de Garde
-    pdf.ln(10)
-    pdf.set_font('Arial', 'B', 22)
-    pdf.set_text_color(46, 125, 50) # #2E7D32
-    pdf.cell(0, 10, "Rapport d'Audit - EvoluCheck", 0, 1, 'C')
-    
-    # Ligne fine
-    pdf.set_draw_color(224, 224, 224) # Gris clair
-    pdf.line(25, 55, 185, 55)
-    pdf.ln(20)
-    
-    # Infos
-    pdf.set_font('Arial', '', 11)
-    pdf.set_text_color(97, 97, 97)
-    pdf.cell(0, 8, f"Date de l'audit : {data['date']}", 0, 1, 'C')
-    pdf.cell(0, 8, f"Auditeur : {data['user']}", 0, 1, 'C')
-    pdf.ln(15)
-
-    # Cartes de Scores (Alignées)
-    y_cards = pdf.get_y()
-    card_w = 35
-    gap = 5
-    start_x = (210 - (4 * card_w + 3 * gap)) / 2 # Centrage
-    
-    pdf.draw_card(start_x, y_cards, card_w, 35, "Global", f"{data['global']}/100")
-    pdf.draw_card(start_x + card_w + gap, y_cards, card_w, 35, "Adaptabilite", f"{data['scores_radar'][0]}/5")
-    pdf.draw_card(start_x + 2*(card_w + gap), y_cards, card_w, 35, "Innovation", f"{data['scores_radar'][1]}/5")
-    pdf.draw_card(start_x + 3*(card_w + gap), y_cards, card_w, 35, "Durabilite", f"{data['scores_radar'][2]}/5")
-    
-    pdf.ln(45)
-
-    # Diagnostic
-    pdf.chapter_title("Diagnostic Expert")
-    msg = data['diag']['message'].encode('latin-1', 'replace').decode('latin-1')
-    pdf.body_text(msg)
-    pdf.ln(10)
-
-    # Graphiques (Side by Side)
-    y_charts = pdf.get_y()
-    
-    # Radar
-    with tempfile.NamedTemporaryFile(delete=False, suffix='.png') as tmp_radar:
-        tmp_radar.write(radar_img.getvalue())
-        tmp_radar_path = tmp_radar.name
-    pdf.image(tmp_radar_path, x=25, y=y_charts, w=75)
-    os.unlink(tmp_radar_path)
-    
-    # Farmer
-    if data.get('risques'):
-        with tempfile.NamedTemporaryFile(delete=False, suffix='.png') as tmp_farmer:
-            tmp_farmer.write(farmer_img.getvalue())
-            tmp_farmer_path = tmp_farmer.name
-        pdf.image(tmp_farmer_path, x=110, y=y_charts, w=75)
-        os.unlink(tmp_farmer_path)
-    
-    pdf.add_page()
-
-    # Recommandations
-    if data['diag'].get('recos'):
-        pdf.chapter_title("Recommandations Prioritaires")
-        
-        for reco in data['diag']['recos']:
-            titre = reco['titre'].encode('latin-1', 'replace').decode('latin-1')
-            texte = reco['texte'].encode('latin-1', 'replace').decode('latin-1')
-            
-            pdf.chapter_subtitle(f"> {titre}")
-            pdf.body_text(texte)
-            pdf.ln(2)
-        pdf.ln(10)
-
-    # 3) Tableau "Dimension 6"
-    pdf.add_page()
-    pdf.chapter_title("Dimension 6 - Evolutive : Criteres & KPI")
-    pdf.ln(5)
-
-    # Configuration Tableau
-    col_widths = [50, 50, 60] # Total 160
-    headers = ["Sous-dimension", "Criteres", "KPI & Valeurs"]
-    
-    # En-tête (Vert clair #66BB6A)
-    pdf.set_fill_color(102, 187, 106) 
-    pdf.set_text_color(255, 255, 255)
-    pdf.set_font("Arial", 'B', 11)
-    pdf.set_draw_color(255, 255, 255) # Bordures blanches (invisibles)
-    
-    # Centrage du tableau
-    x_table = (210 - sum(col_widths)) / 2
-    pdf.set_x(x_table)
-    
-    for i, h in enumerate(headers):
-        pdf.cell(col_widths[i], 10, h, 1, 0, 'C', True)
-    pdf.ln()
-
-    # Données
-    data_rows = [
-        ("Adaptabilite", "Dependance\nAgilite\nArchitecture", 
-         f"Dep: {data.get('dep', '-')} %\nTemps: {data.get('temps', '-')} j\nArch: {data.get('arch', '-')}\nDette: {data.get('dette', '-')}"),
-        ("Innovation", "R&D\nExperimentation", 
-         f"R&D: {data.get('rd', '-')} %\nPoC: {data.get('poc', '-')}\nTransfo: {data.get('taux_transfo', '-')} %"),
-        ("Durabilite", "Efficience\nCycle de vie", 
-         f"PUE: {data.get('pue', '-')}\nRecyclage: {data.get('rec', '-')}\nEnergie: {data.get('energie_verte', '-')} %")
-    ]
-
-    # Corps du tableau
-    pdf.set_text_color(66, 66, 66) # Gris foncé
-    pdf.set_font("Arial", '', 10)
-    pdf.set_draw_color(240, 240, 240) # Gris très léger pour les bordures
-    
-    for i, row in enumerate(data_rows):
-        # Couleur alternée
-        fill = True if i % 2 != 0 else False
-        pdf.set_fill_color(249, 249, 249) # #F9F9F9
-        
-        pdf.set_x(x_table)
-        
-        # Hauteur dynamique (basée sur le contenu le plus haut)
-        # Ici on fixe une hauteur confortable car on sait ce qu'on a
-        row_height = 25 
-        
-        x_start = pdf.get_x()
-        y_start = pdf.get_y()
-        
-        # Col 1
-        pdf.cell(col_widths[0], row_height, row[0], 1, 0, 'L', fill)
-        
-        # Col 2 (Multi-ligne)
-        pdf.set_xy(x_start + col_widths[0], y_start)
-        # Astuce pour background fill sur multi-cell: dessiner un rect d'abord
-        if fill: pdf.rect(x_start + col_widths[0], y_start, col_widths[1], row_height, 'F')
-        pdf.rect(x_start + col_widths[0], y_start, col_widths[1], row_height) # Bordure
-        
-        pdf.set_xy(x_start + col_widths[0], y_start + 5)
-        lines = row[1].split('\n')
-        for line in lines:
-            pdf.set_x(x_start + col_widths[0])
-            pdf.cell(col_widths[1], 5, line, 0, 1, 'L')
-            
-        # Col 3 (Multi-ligne)
-        pdf.set_xy(x_start + col_widths[0] + col_widths[1], y_start)
-        if fill: pdf.rect(x_start + col_widths[0] + col_widths[1], y_start, col_widths[2], row_height, 'F')
-        pdf.rect(x_start + col_widths[0] + col_widths[1], y_start, col_widths[2], row_height) # Bordure
-        
-        pdf.set_xy(x_start + col_widths[0] + col_widths[1], y_start + 3)
-        lines = row[2].split('\n')
-        for line in lines:
-            pdf.set_x(x_start + col_widths[0] + col_widths[1])
-            pdf.cell(col_widths[2], 5, line, 0, 1, 'L')
-            
-        pdf.set_xy(x_start, y_start + row_height)
-
-    # Output
     response = make_response(pdf.output(dest='S').encode('latin-1'))
     response.headers['Content-Type'] = 'application/pdf'
-    response.headers['Content-Disposition'] = 'attachment; filename=rapport_audit_evolucheck.pdf'
+    response.headers['Content-Disposition'] = f'attachment; filename=Audit_EvoluCheck_{datetime.now().strftime("%Y%m%d")}.pdf'
     return response
 
 # Initialisation DB au lancement

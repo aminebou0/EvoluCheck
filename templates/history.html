@@ -1,0 +1,155 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div style="margin-top: 2rem;">
+    <!-- En-tête -->
+    <div style="text-align: center; margin-bottom: 3rem;">
+        <h1 style="color: var(--primary-dark); font-weight: 800; font-size: 2.5rem; margin-bottom: 1rem;">
+            Votre Historique d'Audits
+        </h1>
+        <p style="color: var(--text-light); font-size: 1.1rem; max-width: 600px; margin: 0 auto;">
+            Suivez l'évolution de la maturité de votre Système d'Information au fil du temps.
+        </p>
+    </div>
+
+    <!-- Graphique d'Évolution -->
+    <div class="card fade-up" style="padding: 2rem; margin-bottom: 3rem;">
+        <h3 style="color: var(--primary); margin-bottom: 1.5rem;">
+            <i class="fa-solid fa-chart-line"></i> Évolution du Score Global
+        </h3>
+        <div style="height: 350px;">
+            <canvas id="evolutionChart" data-dates='{{ dates | tojson | safe }}'
+                data-scores='{{ scores | tojson | safe }}'>
+            </canvas>
+        </div>
+    </div>
+
+    <!-- Tableau des Audits -->
+    <div class="card fade-up" style="padding: 2rem; animation-delay: 0.2s;">
+        <h3 style="color: var(--text-dark); margin-bottom: 1.5rem;">
+            <i class="fa-solid fa-list-check"></i> Rapports Précédents
+        </h3>
+
+        {% if audits %}
+        <div style="overflow-x: auto;">
+            <table style="width: 100%; border-collapse: collapse; min-width: 600px;">
+                <thead>
+                    <tr
+                        style="border-bottom: 2px solid var(--border-color); color: var(--text-light); text-align: left;">
+                        <th style="padding: 1rem;">Date</th>
+                        <th style="padding: 1rem; text-align: center;">Score Global</th>
+                        <th style="padding: 1rem; text-align: center;">Adaptabilité</th>
+                        <th style="padding: 1rem; text-align: center;">Innovation</th>
+                        <th style="padding: 1rem; text-align: center;">Durabilité</th>
+                        <th style="padding: 1rem; text-align: right;">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for audit in audits %}
+                    <tr style="border-bottom: 1px solid var(--border-color); transition: background 0.2s;">
+                        <td style="padding: 1rem; font-weight: 500;">
+                            {{ audit.date_audit.strftime('%d/%m/%Y') }}
+                            <br>
+                            <span style="font-size: 0.8rem; color: var(--text-light);">{{
+                                audit.date_audit.strftime('%H:%M') }}</span>
+                        </td>
+                        <td style="padding: 1rem; text-align: center;">
+                            <span style="background: {{ 'rgba(16, 185, 129, 0.1)' if audit.score_global > 70 else 'rgba(245, 158, 11, 0.1)' }}; 
+                                         color: {{ '#059669' if audit.score_global > 70 else '#D97706' }}; 
+                                         padding: 5px 12px; border-radius: 20px; font-weight: 700;">
+                                {{ audit.score_global|int }} / 100
+                            </span>
+                        </td>
+                        <td style="padding: 1rem; text-align: center;">{{ audit.score_adaptabilite }}/5</td>
+                        <td style="padding: 1rem; text-align: center;">{{ audit.score_innovation }}/5</td>
+                        <td style="padding: 1rem; text-align: center;">{{ audit.score_durabilite }}/5</td>
+                        <td style="padding: 1rem; text-align: right;">
+                            <a href="{{ url_for('load_audit', audit_id=audit.id) }}" class="btn"
+                                style="padding: 0.5rem 1rem; font-size: 0.9rem;">
+                                <i class="fa-solid fa-eye"></i> Voir
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div style="text-align: center; padding: 2rem; color: var(--text-light);">
+            <i class="fa-solid fa-folder-open" style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.5;"></i>
+            <p>Aucun audit enregistré pour le moment.</p>
+            <a href="{{ url_for('audit') }}" class="btn" style="margin-top: 1rem;">Lancer mon premier audit</a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Script Chart.js -->
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const canvas = document.getElementById('evolutionChart');
+        if (!canvas) return; // Pas de graphique si pas d'élément
+
+        // Récupération des données depuis les attributs data-
+        // Utilisation de try-catch au cas où le JSON serait malformé
+        let dates = [];
+        let scores = [];
+
+        try {
+            dates = JSON.parse(canvas.dataset.dates || '[]');
+            scores = JSON.parse(canvas.dataset.scores || '[]');
+        } catch (e) {
+            console.error("Erreur parsing données historique", e);
+        }
+
+        if (dates.length === 0) return; // Pas de données, pas de chart
+
+        const ctx = canvas.getContext('2d');
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: dates,
+                datasets: [{
+                    label: 'Score de Maturité (%)',
+                    data: scores,
+                    borderColor: '#10B981',
+                    backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                    borderWidth: 3,
+                    tension: 0.4,
+                    pointBackgroundColor: '#fff',
+                    pointBorderColor: '#059669',
+                    pointRadius: 6,
+                    pointHoverRadius: 8,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                preserveAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 100,
+                        grid: { color: 'rgba(0,0,0,0.05)' }
+                    },
+                    x: {
+                        grid: { display: false }
+                    }
+                },
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: '#1F2937',
+                        padding: 10,
+                        callbacks: {
+                            label: function (context) {
+                                return ' Score : ' + context.parsed.y + '%';
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    });
+</script>
+{% endblock %}

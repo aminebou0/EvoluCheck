@@ -12,7 +12,8 @@
 <div class="dashboard-container" style="max-width: 1000px; margin: 0 auto;">
 
     <!-- EN-TÊTE : SCORE ET ACTIONS -->
-    <div class="dashboard-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; border-bottom: 1px solid #eee; padding-bottom: 1rem;">
+    <div class="dashboard-header"
+        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; border-bottom: 1px solid #eee; padding-bottom: 1rem;">
         <div>
             <h2 style="color: var(--text-dark); margin-bottom: 5px;">Résultats de l'Audit</h2>
             <p style="color: var(--text-light); font-size: 0.9rem;">
@@ -21,7 +22,8 @@
         </div>
         <div style="text-align: right;">
             <div style="font-size: 0.85rem; color: #666; margin-bottom: 5px;">Score Global de Maturité</div>
-            <div class="score-badge" style="font-size: 2.5rem; font-weight: 800; color: {{ '#10B981' if data.global >= 60 else '#EF4444' }};">
+            <div class="score-badge"
+                style="font-size: 2.5rem; font-weight: 800; color: {{ '#10B981' if data.global >= 60 else '#EF4444' }};">
                 {{ data.global }}%
             </div>
         </div>
@@ -29,99 +31,117 @@
 
     <!-- BOUTON EXPORT PDF -->
     <div style="text-align: right; margin-bottom: 2rem;">
-        <a href="{{ url_for('export_pdf') }}" class="btn" style="background-color: #EF4444; color: white; padding: 10px 20px; text-decoration: none; border-radius: 8px; font-weight: 600;">
+        <a href="{{ url_for('export_pdf') }}" class="btn"
+            style="background-color: #EF4444; color: white; padding: 10px 20px; text-decoration: none; border-radius: 8px; font-weight: 600;">
             <i class="fa-solid fa-file-pdf"></i> Télécharger le Rapport Complet
         </a>
     </div>
 
-    <!-- DIAGNOSTIC EXPERT -->
-    <div class="alert-box" style="background: {{ '#ECFDF5' if data.diag.color == 'success' else '#FEF2F2' }}; border-left: 5px solid {{ '#10B981' if data.diag.color == 'success' else '#EF4444' }}; padding: 1.5rem; border-radius: 8px; margin-bottom: 2rem;">
-        <h4 style="color: {{ '#065F46' if data.diag.color == 'success' else '#991B1B' }}; margin-top: 0; display: flex; align-items: center; gap: 10px;">
-            <i class="fa-solid fa-stethoscope"></i> {{ data.diag.type }}
-        </h4>
-        <p style="margin-bottom: 0; color: var(--text-dark);">{{ data.diag.message }}</p>
+    <!-- DIAGNOSTIC EXPERT & SAUVEGARDE -->
+    <div style="display:flex; gap: 1rem; align-items: flex-start; margin-bottom: 2rem;">
+        <div class="alert-box"
+            style="flex:1; background: {{ '#ECFDF5' if data.diag.color == 'success' else '#FEF2F2' }}; border-left: 5px solid {{ '#10B981' if data.diag.color == 'success' else '#EF4444' }}; padding: 1.5rem; border-radius: 8px;">
+            <h4
+                style="color: {{ '#065F46' if data.diag.color == 'success' else '#991B1B' }}; margin-top: 0; display: flex; align-items: center; gap: 10px;">
+                <i class="fa-solid fa-stethoscope"></i> {{ data.diag.type }}
+            </h4>
+            <p style="margin-bottom: 0; color: var(--text-dark);">{{ data.diag.message }}</p>
+        </div>
+
+        <!-- BOUTON SAUVEGARDER -->
+        <form action="{{ url_for('save_audit') }}" method="POST">
+            <button type="submit" class="btn"
+                style="background: white; color: var(--primary); border: 2px solid var(--primary); height: 100%; white-space: nowrap;">
+                <i class="fa-solid fa-floppy-disk"></i> Sauvegarder
+            </button>
+        </form>
     </div>
 
     <div class="charts-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
-        
+
         <!-- 1. GRAPHIQUE RADAR (DIMENSIONS) -->
-        <div class="card" style="background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);">
+        <div class="card fade-up" style="animation-delay: 0.1s;">
             <h3 style="text-align: center; margin-bottom: 1rem; color: var(--primary-dark);">Radar des 3 Piliers</h3>
             <div style="position: relative; height: 300px;">
                 <canvas id="radarChart"></canvas>
             </div>
             <div style="text-align: center; margin-top: 15px; font-size: 0.9rem;">
-                <span style="margin-right: 10px;"><i class="fa-solid fa-circle" style="color: #10B981; font-size: 8px;"></i> Cible > 3/5</span>
+                <span style="margin-right: 10px;"><i class="fa-solid fa-circle"
+                        style="color: #10B981; font-size: 8px;"></i> Cible > 3/5</span>
             </div>
         </div>
 
         <!-- 2. MATRICE DE FARMER (RISQUES) -->
-        <div class="card" style="background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);">
-            <h3 style="text-align: center; margin-bottom: 1rem; color: var(--primary-dark);">Cartographie des Risques</h3>
-            
+        <div class="card fade-up" style="animation-delay: 0.2s;">
+            <h3 style="text-align: center; margin-bottom: 1rem; color: var(--primary-dark);">Cartographie des Risques
+            </h3>
+
             {% if data.risques %}
-            <div class="risk-matrix-wrapper" style="position: relative; width: 100%; aspect-ratio: 1/1; max-width: 350px; margin: 0 auto;">
+            <div class="risk-matrix-wrapper"
+                style="position: relative; width: 100%; aspect-ratio: 1/1; max-width: 350px; margin: 0 auto;">
                 <!-- Axes -->
-                <div style="position: absolute; left: -25px; top: 50%; transform: rotate(-90deg) translateX(50%); font-weight: bold; font-size: 0.8rem;">IMPACT</div>
-                <div style="position: absolute; bottom: -25px; left: 50%; transform: translateX(-50%); font-weight: bold; font-size: 0.8rem;">PROBABILITÉ</div>
+                <div class="axis-label-y">IMPACT</div>
+                <div class="axis-label-x">PROBABILITÉ</div>
 
                 <!-- Grille 3x3 CSS -->
-                <div class="farmer-grid" style="display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(3, 1fr); width: 100%; height: 100%; border: 2px solid #333; gap: 2px; background: #333;">
+                <div class="farmer-grid">
                     <!-- Ligne 3 (Haut - Impact Fort) -->
-                    <div style="background: #fef3c7;"></div> <div style="background: #fee2e2;"></div> <div style="background: #fee2e2;"></div>
+                    <div class="zone-yellow"></div>
+                    <div class="zone-orange"></div>
+                    <div class="zone-red"></div>
                     <!-- Ligne 2 (Milieu - Impact Moyen) -->
-                    <div style="background: #d1fae5;"></div> <div style="background: #fef3c7;"></div> <div style="background: #fee2e2;"></div>
+                    <div class="zone-green"></div>
+                    <div class="zone-yellow"></div>
+                    <div class="zone-orange"></div>
                     <!-- Ligne 1 (Bas - Impact Faible) -->
-                    <div style="background: #d1fae5;"></div> <div style="background: #d1fae5;"></div> <div style="background: #fef3c7;"></div>
+                    <div class="zone-green"></div>
+                    <div class="zone-green"></div>
+                    <div class="zone-yellow"></div>
                 </div>
 
                 <!-- Points de Risques -->
                 {% for risque in data.risques %}
-                <div class="risk-point" 
-                     style="
-                        position: absolute;
-                        /* Calcul position : (Prob - 1) * 33% + 16% (centrer) */
+                <div class="risk-point" style="
                         left: calc({{ (risque.prob - 1) * 33.33 + 16.6 }}%);
-                        /* Calcul position Y : (3 - Impact) * 33% + 16% (centrer, car l'axe Y monte) */
                         top: calc({{ (3 - risque.impact) * 33.33 + 16.6 }}%);
-                        width: 15px; height: 15px; background: #DC2626; border-radius: 50%; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.3); transform: translate(-50%, -50%); cursor: pointer;
-                     "
-                     title="{{ risque.nom }} (Imp: {{risque.impact}}, Prob: {{risque.prob}})">
+                     " title="{{ risque.nom }} (Imp: {{risque.impact}}, Prob: {{risque.prob}})">
                 </div>
                 {% endfor %}
             </div>
-            <div style="text-align: center; margin-top: 30px; font-size: 0.85rem; color: #666;">
-                Survolez les points rouges pour voir les détails.
+            <div style="text-align: center; margin-top: 30px; font-size: 0.85rem; color: var(--text-light);">
+                Survolez les points pour voir les détails.
             </div>
             {% else %}
-                <div style="height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; color: #10B981;">
-                    <i class="fa-solid fa-shield-halved" style="font-size: 3rem; margin-bottom: 10px;"></i>
-                    <p>Aucun risque critique identifié.</p>
-                </div>
+            <div
+                style="height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; color: var(--primary);">
+                <i class="fa-solid fa-shield-halved" style="font-size: 3rem; margin-bottom: 10px;"></i>
+                <p>Aucun risque critique identifié.</p>
+            </div>
             {% endif %}
         </div>
     </div>
 
     <!-- PLAN D'ACTION / RECOMMANDATIONS -->
-    <div class="card" style="background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); margin-top: 2rem;">
+    <div class="card fade-up" style="animation-delay: 0.3s;">
         <h3 style="margin-bottom: 1.5rem;"><i class="fa-solid fa-clipboard-list"></i> Plan d'Action Prioritaire</h3>
-        
+
         {% if data.diag.recos %}
-            <div style="display: grid; gap: 15px;">
-                {% for reco in data.diag.recos %}
-                <div style="display: flex; gap: 15px; align-items: start; padding: 15px; background: #F9FAFB; border-radius: 8px; border-left: 4px solid #F59E0B;">
-                    <i class="fa-solid fa-triangle-exclamation" style="color: #F59E0B; margin-top: 3px;"></i>
-                    <div>
-                        <strong style="display: block; color: #1F2937; margin-bottom: 5px;">{{ reco.titre }}</strong>
-                        <p style="margin: 0; color: #4B5563; font-size: 0.95rem;">{{ reco.texte }}</p>
-                    </div>
+        <div style="display: grid; gap: 15px;">
+            {% for reco in data.diag.recos %}
+            <div class="reco-item">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+                <div>
+                    <strong>{{ reco.titre }}</strong>
+                    <p>{{ reco.texte }}</p>
                 </div>
-                {% endfor %}
             </div>
+            {% endfor %}
+        </div>
         {% else %}
-            <p style="text-align: center; color: #10B981;">
-                <i class="fa-solid fa-check-circle"></i> Félicitations, votre SI est conforme aux standards de la Dimension 6.
-            </p>
+        <p style="text-align: center; color: var(--primary);">
+            <i class="fa-solid fa-check-circle"></i> Félicitations, votre SI est conforme aux standards de la Dimension
+            6.
+        </p>
         {% endif %}
     </div>
 
@@ -129,13 +149,13 @@
 
 <!-- SCRIPT JS POUR LE GRAPHIQUE -->
 <script>
-    document.addEventListener("DOMContentLoaded", function() {
+    document.addEventListener("DOMContentLoaded", function () {
         // Récupération des données
         let scores = [0, 0, 0];
         try {
             const dataEl = document.getElementById('radar-data');
             if (dataEl) scores = JSON.parse(dataEl.textContent);
-        } catch(e) { console.error("Erreur parsing JSON", e); }
+        } catch (e) { console.error("Erreur parsing JSON", e); }
 
         // Configuration Chart.js
         const ctx = document.getElementById('radarChart').getContext('2d');

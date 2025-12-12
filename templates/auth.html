@@ -12,12 +12,14 @@
 
         <!-- BOUTONS SOCIAL LOGIN (Visibles sur les deux formulaires) -->
         <div id="social-login-section">
-            <a href="#" class="social-btn">
+            <a href="{{ url_for('login_google') }}" class="social-btn">
                 <i class="fa-brands fa-google" style="color: #DB4437;"></i> Continuer avec Google
             </a>
+            <!-- LinkedIn désactivé
             <a href="#" class="social-btn">
                 <i class="fa-brands fa-linkedin" style="color: #0077B5;"></i> Continuer avec LinkedIn
             </a>
+            -->
             <div class="divider">OU AVEC EMAIL</div>
         </div>
 
