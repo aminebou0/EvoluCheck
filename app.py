@@ -278,15 +278,19 @@ def generer_image_farmer(risques):
     plt.close()
     return img_io
 
-def get_ai_response(msg):
-    """Chatbot Intelligent via OpenAI"""
+def get_ai_response(msg, context=None):
+    """Chatbot Intelligent via OpenAI avec Contexte Audit"""
     if not client: return "Erreur : Clé API non configurée dans le fichier .env"
     try:
-        system_prompt = "Tu es l'Expert IA 'EvoluCheck'. Directives : Adaptabilité (Microservices), Innovation (R&D > 5%), Durabilité (PUE < 1.4). Sois concis et professionnel."
+        system_prompt = "Tu es l'Expert IA 'EvoluCheck'. Directives : Adaptabilité (Microservices), Innovation (R&D > 5%), Durabilité (PUE < 1.4). Sois concis, professionnel et empathique."
+        
+        if context:
+            system_prompt += f"\n\nCONTEXTE DE L'AUDIT UTILISATEUR :\n{context}\n\nUtilise ces données pour personnaliser tes réponses."
+
         response = client.chat.completions.create(
             model="gpt-3.5-turbo",
             messages=[{"role": "system", "content": system_prompt}, {"role": "user", "content": msg}],
-            temperature=0.7, max_tokens=150
+            temperature=0.7, max_tokens=250
         )
         return response.choices[0].message.content
     except Exception as e: return f"Erreur IA : {str(e)}"
@@ -535,7 +539,29 @@ def dashboard():
 @app.route('/api/chat', methods=['POST'])
 def chat_api():
     data = request.get_json()
-    return {"response": get_ai_response(data.get('message'))}
+    user_msg = data.get('message')
+    
+    # Construction du contexte si un audit existe
+    context_str = None
+    if 'last_audit' in session:
+        audit = session['last_audit']
+        context_str = (
+            f"Score Global: {audit['global']}/100. "
+            f"Scores Dimensions: Adaptabilité {audit['scores_radar'][0]}/5, "
+            f"Innovation {audit['scores_radar'][1]}/5, Durabilité {audit['scores_radar'][2]}/5. "
+        )
+        # Ajout des risques majeurs
+        if audit.get('risques'):
+            risques_noms = [r['nom'] for r in audit['risques'] if r['impact'] == 3]
+            if risques_noms:
+                context_str += f"Risques Critiques identifiés: {', '.join(risques_noms)}."
+        
+        # Ajout des recommendations (titres seulement)
+        if audit['diag'].get('recos'):
+             recos_titres = [r['titre'] for r in audit['diag']['recos']]
+             context_str += f" Recommandations proposées: {', '.join(recos_titres)}."
+
+    return {"response": get_ai_response(user_msg, context=context_str)}
 
 # --- EXPORT PDF (DESIGN MINIMALISTE) ---
 
