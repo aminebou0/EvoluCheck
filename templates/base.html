@@ -30,7 +30,6 @@
             <a href="{{ url_for('about') }}">À propos</a>
             <a href="{{ url_for('contact') }}">Contact</a>
             {% if session.get('user') %}
-            <a href="{{ url_for('history') }}">Historique</a>
             <a href="{{ url_for('audit') }}" class="btn-nav">Nouvel Audit</a>
             <a href="{{ url_for('logout') }}"><i class="fa-solid fa-right-from-bracket"></i></a>
             {% else %}
@@ -46,7 +45,9 @@
         {% if messages %}
         <div class="flash-messages" style="margin-bottom: 20px;">
             {% for category, message in messages %}
-            <div class="alert {{ 'alert-danger' if category == 'error' else 'alert-success' }} alert-box">
+            <div class="alert alert-{{ category }}" style="padding: 15px; border-radius: 5px; margin-bottom: 10px; 
+                    background-color: {{ '#fee2e2' if category == 'error' else '#dcfce7' }}; 
+                    color: {{ '#991b1b' if category == 'error' else '#166534' }}; border: 1px solid currentColor;">
                 {{ message }}
             </div>
             {% endfor %}

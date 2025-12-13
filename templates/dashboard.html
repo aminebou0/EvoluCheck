@@ -37,24 +37,14 @@
         </a>
     </div>
 
-    <!-- DIAGNOSTIC EXPERT & SAUVEGARDE -->
-    <div style="display:flex; gap: 1rem; align-items: flex-start; margin-bottom: 2rem;">
-        <div class="alert-box"
-            style="flex:1; background: {{ '#ECFDF5' if data.diag.color == 'success' else '#FEF2F2' }}; border-left: 5px solid {{ '#10B981' if data.diag.color == 'success' else '#EF4444' }}; padding: 1.5rem; border-radius: 8px;">
-            <h4
-                style="color: {{ '#065F46' if data.diag.color == 'success' else '#991B1B' }}; margin-top: 0; display: flex; align-items: center; gap: 10px;">
-                <i class="fa-solid fa-stethoscope"></i> {{ data.diag.type }}
-            </h4>
-            <p style="margin-bottom: 0; color: var(--text-dark);">{{ data.diag.message }}</p>
-        </div>
-
-        <!-- BOUTON SAUVEGARDER -->
-        <form action="{{ url_for('save_audit') }}" method="POST">
-            <button type="submit" class="btn"
-                style="background: white; color: var(--primary); border: 2px solid var(--primary); height: 100%; white-space: nowrap;">
-                <i class="fa-solid fa-floppy-disk"></i> Sauvegarder
-            </button>
-        </form>
+    <!-- DIAGNOSTIC EXPERT -->
+    <div class="alert-box"
+        style="background: {{ '#ECFDF5' if data.diag.color == 'success' else '#FEF2F2' }}; border-left: 5px solid {{ '#10B981' if data.diag.color == 'success' else '#EF4444' }}; padding: 1.5rem; border-radius: 8px; margin-bottom: 2rem;">
+        <h4
+            style="color: {{ '#065F46' if data.diag.color == 'success' else '#991B1B' }}; margin-top: 0; display: flex; align-items: center; gap: 10px;">
+            <i class="fa-solid fa-stethoscope"></i> {{ data.diag.type }}
+        </h4>
+        <p style="margin-bottom: 0; color: var(--text-dark);">{{ data.diag.message }}</p>
     </div>
 
     <div class="charts-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
