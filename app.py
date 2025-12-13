@@ -23,6 +23,10 @@ app.config['SECRET_KEY'] = 'audit_s2i_dimension6_secret_key'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///evolucheck.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
+# FIX POUR PYTHONANYWHERE (HTTPS)
+from werkzeug.middleware.proxy_fix import ProxyFix
+app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
+
 # Initialisation BDD et Services
 db = SQLAlchemy(app)
 from authlib.integrations.flask_client import OAuth
