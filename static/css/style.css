@@ -1,7 +1,6 @@
 /* =========================================
    1. VARIABLES & RESET (PREMIUM THEME)
    ========================================= */
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
 
 :root {
     /* Palette Premium "Eco-Tech" */
@@ -36,7 +35,21 @@
     margin: 0;
     padding: 0;
     box-sizing: border-box;
+    font-family: 'Inter', sans-serif;
+    /* Corps de texte propre et lisible */
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+.btn,
+.navbar-brand,
+.logo-container span {
     font-family: 'Outfit', sans-serif;
+    /* Titres modernes et stylés */
 }
 
 body {
@@ -174,26 +187,327 @@ body {
    4. PAGE D'ACCUEIL (Hero & Grid)
    ========================================= */
 .hero {
-    text-align: center;
-    padding: 5rem 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 4rem;
+    padding: 4rem 1rem;
+    text-align: left;
+    /* Alignement à gauche par défaut */
+}
+
+.hero-content {
+    flex: 1;
+    max-width: 600px;
+}
+
+.hero-visual {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    position: relative;
+}
+
+/* Composition visuelle (Icônes flottantes) */
+.visual-circle {
+    width: 400px;
+    height: 400px;
+    background: radial-gradient(circle, rgba(16, 185, 129, 0.1) 0%, rgba(255, 255, 255, 0) 70%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+}
+
+.main-icon {
+    font-size: 8rem;
+    color: var(--primary);
+    filter: drop-shadow(0 10px 20px rgba(16, 185, 129, 0.3));
+    animation: pulse-soft 3s infinite ease-in-out;
+}
+
+.float-icon {
+    position: absolute;
+    background: white;
+    padding: 15px;
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+    color: var(--text-dark);
+    font-size: 1.5rem;
+    animation: float-icon 4s infinite ease-in-out;
+}
+
+.float-icon.f1 {
+    top: 20%;
+    left: 10%;
+    animation-delay: 0s;
+    color: #3B82F6;
+}
+
+.float-icon.f2 {
+    bottom: 20%;
+    right: 10%;
+    animation-delay: 1s;
+    color: #F59E0B;
+}
+
+.float-icon.f3 {
+    top: 10%;
+    right: 20%;
+    animation-delay: 2s;
+    color: #EF4444;
+}
+
+@keyframes float-icon {
+
+    0%,
+    100% {
+        transform: translateY(0);
+    }
+
+    50% {
+        transform: translateY(-15px);
+    }
+}
+
+@keyframes pulse-soft {
+
+    0%,
+    100% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(1.05);
+    }
 }
 
 .hero h1 {
-    font-size: 3rem;
-    line-height: 1.2;
+    font-size: 3.5rem;
+    /* Plus grand */
+    line-height: 1.1;
     margin-bottom: 1.5rem;
     color: var(--text-dark);
+    font-weight: 800;
 }
 
 .hero h1 strong {
-    color: var(--primary);
+    background: var(--primary-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
 }
 
+/* Responsive pour Hero */
+@media (max-width: 992px) {
+    .hero {
+        flex-direction: column-reverse;
+        /* Visuel en haut ou en bas, ici on met l'image en haut si on veut, ou en bas. Column-reverse met le contenu en bas. Essayons column normal pour mobile : Image en haut ou Texte en haut ? Texte en haut souvent mieux. */
+        flex-direction: column;
+        text-align: center;
+        gap: 2rem;
+    }
+
+    .hero-content {
+        margin: 0 auto;
+    }
+
+    .hero p {
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .hero-buttons {
+        justify-content: center;
+    }
+
+    .visual-circle {
+        width: 300px;
+        height: 300px;
+    }
+
+    .main-icon {
+        font-size: 5rem;
+    }
+}
+
+/* =========================================
+   4b-bis. SECTION NORMES & RÉFÉRENTIELS
+   ========================================= */
+.standards-section {
+    padding: 4rem 1rem;
+    background: var(--bg-body);
+    border-top: 1px solid rgba(0, 0, 0, 0.05);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.standards-container {
+    max-width: 1000px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 4rem;
+}
+
+.standards-text {
+    flex: 1;
+}
+
+.standards-text h2 {
+    font-size: 2rem;
+    margin-bottom: 1rem;
+    color: var(--text-dark);
+}
+
+.standards-text p {
+    color: var(--text-light);
+    margin-bottom: 2rem;
+    font-size: 1rem;
+}
+
+.standards-logos {
+    flex: 1;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+}
+
+.std-card {
+    background: white;
+    padding: 1.5rem;
+    border-radius: var(--radius-sm);
+    text-align: center;
+    box-shadow: var(--shadow-sm);
+    transition: transform 0.3s;
+    border: 1px solid rgba(0, 0, 0, 0.03);
+}
+
+.std-card:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--shadow);
+    border-color: var(--primary);
+}
+
+.std-icon {
+    font-size: 2rem;
+    color: var(--primary);
+    margin-bottom: 0.5rem;
+}
+
+.std-title {
+    font-weight: 700;
+    color: var(--text-dark);
+    display: block;
+    margin-bottom: 5px;
+}
+
+.std-desc {
+    font-size: 0.85rem;
+    color: var(--text-light);
+}
+
+@media (max-width: 768px) {
+    .standards-container {
+        flex-direction: column;
+        text-align: center;
+    }
+}
+
+
+.process-steps {
+    display: flex;
+    justify-content: center;
+    gap: 3rem;
+    margin-top: 3rem;
+    position: relative;
+    max-width: 1000px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+/* Ligne pointillée connectant les étapes */
+.process-steps::before {
+    content: '';
+    position: absolute;
+    top: 40px;
+    left: 10%;
+    right: 10%;
+    height: 3px;
+    background-image: linear-gradient(to right, var(--primary) 50%, transparent 50%);
+    background-size: 20px 100%;
+    opacity: 0.3;
+    z-index: 0;
+}
+
+.step-card {
+    background: white;
+    padding: 1.5rem;
+    border-radius: var(--radius);
+    width: 280px;
+    position: relative;
+    z-index: 1;
+    transition: transform 0.3s;
+}
+
+.step-card:hover {
+    transform: translateY(-10px);
+}
+
+.step-icon-box {
+    width: 80px;
+    height: 80px;
+    background: var(--bg-body);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1.5rem;
+    border: 2px solid var(--primary);
+    background: white;
+    font-size: 2rem;
+    color: var(--primary);
+    position: relative;
+}
+
+.step-number {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    width: 30px;
+    height: 30px;
+    background: var(--primary);
+    color: white;
+    border-radius: 50%;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+}
+
+.step-card h3 {
+    font-size: 1.3rem;
+    margin-bottom: 0.5rem;
+}
+
+.step-card p {
+    font-size: 0.95rem;
+    color: var(--text-light);
+}
+
+
+/* =========================================
+   4c. EFFET TILT 3D (CARTES)
+   ========================================= */
 .features-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
     gap: 2rem;
-    margin-top: 2rem;
+    margin-top: 4rem;
+    /* Un peu plus d'espace */
+    perspective: 1000px;
+    /* Perspective pour le 3D */
+    padding-bottom: 3rem;
 }
 
 .feature-card {
@@ -202,12 +516,15 @@ body {
     border-radius: var(--radius);
     text-align: center;
     box-shadow: var(--shadow);
-    transition: transform 0.3s, box-shadow 0.3s;
+    /* Transition fluide pour le retour à la normale */
+    transition: transform 0.1s ease-out, box-shadow 0.3s;
+    transform-style: preserve-3d;
+    backface-visibility: hidden;
 }
 
+/* L'effet de tilt sera géré par JS, mais on garde un hover simple au cas où */
 .feature-card:hover {
-    transform: translateY(-5px);
-    box-shadow: var(--shadow-lg);
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
 }
 
 .feature-icon {
@@ -220,7 +537,16 @@ body {
     line-height: 80px;
     border-radius: 50%;
     display: inline-block;
+    /* Petit effet de profondeur sur l'icône */
+    transform: translateZ(30px);
 }
+
+.feature-card h3,
+.feature-card p {
+    transform: translateZ(20px);
+    /* Le texte ressort aussi */
+}
+
 
 .feature-card h3 {
     margin-bottom: 1rem;
@@ -235,9 +561,97 @@ body {
 /* =========================================
    5. AUTHENTIFICATION (Login/Register)
    ========================================= */
-.auth-container {
-    max-width: 420px;
-    margin: 3rem auto;
+/* =========================================
+   5. AUTHENTIFICATION SPLIT SCREEN
+   ========================================= */
+.auth-wrapper {
+    display: flex;
+    min-height: 80vh;
+    border-radius: var(--radius);
+    overflow: hidden;
+    box-shadow: var(--shadow-hover);
+    background: white;
+    max-width: 1000px;
+    margin: 2rem auto;
+}
+
+/* Partie Gauche : Visuel */
+.auth-visual {
+    flex: 1;
+    background: url('https://images.unsplash.com/photo-1551288049-bebda4e38f71?q=80&w=1000&auto=format&fit=crop') center/cover no-repeat;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    padding: 3rem;
+    color: white;
+}
+
+.auth-visual::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(to top, rgba(4, 120, 87, 0.9), rgba(16, 185, 129, 0.4));
+}
+
+.auth-quote {
+    position: relative;
+    z-index: 1;
+}
+
+.auth-quote h3 {
+    font-size: 2rem;
+    margin-bottom: 1rem;
+    line-height: 1.2;
+}
+
+.auth-quote p {
+    font-size: 1rem;
+    opacity: 0.9;
+}
+
+/* Partie Droite : Formulaire */
+.auth-form-container {
+    flex: 1;
+    padding: 3rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.auth-header {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.auth-header img {
+    height: 60px;
+    margin-bottom: 1rem;
+}
+
+.auth-header h2 {
+    font-size: 1.8rem;
+    color: var(--text-dark);
+}
+
+.auth-header p {
+    color: var(--text-light);
+}
+
+/* Responsive Mobile */
+@media (max-width: 768px) {
+    .auth-wrapper {
+        flex-direction: column;
+    }
+
+    .auth-visual {
+        display: none;
+    }
+
+    /* On cache l'image sur mobile pour focus formulaire */
 }
 
 .social-btn {
@@ -627,38 +1041,191 @@ body {
    ========================================= */
 /* ... (Team Grid et Chatbot restent identiques, inclus ci-dessous pour complétude) ... */
 
+/* =========================================
+   9. ÉQUIPE & CHATBOT (NOUVEAU DESIGN)
+   ========================================= */
 .team-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-    gap: 2rem;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 2.5rem;
+    margin-top: 2rem;
 }
 
 .team-card {
     background: white;
     border-radius: var(--radius);
-    padding: 2rem 1rem;
     text-align: center;
     box-shadow: var(--shadow);
-    border-top: 4px solid var(--primary);
-    transition: transform 0.2s;
+    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    overflow: hidden;
+    position: relative;
+    cursor: pointer;
+    border: none;
 }
 
 .team-card:hover {
-    transform: translateY(-3px);
+    transform: translateY(-8px);
+    box-shadow: var(--shadow-hover);
 }
 
-.team-avatar {
-    width: 70px;
-    height: 70px;
-    background: var(--secondary);
-    color: var(--primary);
-    border-radius: 50%;
+.team-img-container {
+    width: 100%;
+    height: 260px;
+    background: #f3f4f6;
+    position: relative;
+    overflow: hidden;
+}
+
+.team-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.4s ease;
+}
+
+/* Effet Zoom sur l'image au survol */
+.team-card:hover .team-img,
+.team-card.active .team-img {
+    transform: scale(1.1);
+}
+
+/* OVERLAY RÉSEAUX SOCIAUX */
+.team-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(16, 185, 129, 0.85);
+    /* Vert transparent */
     display: flex;
     align-items: center;
     justify-content: center;
-    margin: 0 auto 1rem;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+/* Affichage overlay au clic (classe .active via JS) ou au survol */
+.team-card:hover .team-overlay,
+.team-card.active .team-overlay {
+    opacity: 1;
+}
+
+.social-links {
+    display: flex;
+    gap: 1.5rem;
+    transform: translateY(20px);
+    transition: transform 0.3s ease;
+}
+
+.team-card:hover .social-links,
+.team-card.active .social-links {
+    transform: translateY(0);
+}
+
+.social-links a {
+    color: white;
     font-size: 1.8rem;
-    font-weight: bold;
+    transition: transform 0.2s;
+}
+
+.social-links a:hover {
+    transform: scale(1.2);
+    color: var(--secondary);
+}
+
+/* INFO MEMBRE */
+.team-info {
+    padding: 1.5rem;
+    background: white;
+    border-top: 4px solid var(--primary);
+}
+
+.team-info h4 {
+    margin: 0;
+    font-size: 1.2rem;
+    color: var(--text-dark);
+}
+
+.role {
+    font-size: 0.9rem;
+    color: var(--primary);
+    font-weight: 600;
+    margin-top: 5px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.click-hint {
+    font-size: 0.75rem;
+    color: var(--text-light);
+    margin-top: 10px;
+    opacity: 0.7;
+}
+
+/* Masquer les anciens styles si présents */
+.team-avatar {
+    display: none;
+}
+
+/* =========================================
+   10b. LOADER IA (OVERLAY)
+   ========================================= */
+.loader-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(255, 255, 255, 0.95);
+    z-index: 9999;
+    display: none;
+    /* Caché par défaut */
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(10px);
+}
+
+.loader-spinner {
+    width: 80px;
+    height: 80px;
+    border: 5px solid rgba(16, 185, 129, 0.2);
+    border-top-color: var(--primary);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-bottom: 2rem;
+}
+
+.loader-text {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-dark);
+    margin-bottom: 0.5rem;
+}
+
+.loader-sub {
+    font-size: 1rem;
+    color: var(--text-light);
+    animation: pulse-text 2s infinite;
+}
+
+@keyframes spin {
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+@keyframes pulse-text {
+
+    0%,
+    100% {
+        opacity: 0.6;
+    }
+
+    50% {
+        opacity: 1;
+    }
 }
 
 /* Widget Chatbot */
@@ -912,4 +1479,237 @@ body {
     margin: 0;
     color: var(--text-light);
     font-size: 0.95rem;
+}
+
+/* =========================================
+   11. BACKGROUND ANIMÉ (FLOATING ORBS)
+   ========================================= */
+.background-orbs {
+    position: fixed;
+    top: -5%;
+    left: -5%;
+    width: 110vw;
+    height: 110vh;
+    z-index: -1;
+    /* Derrière tout le contenu */
+    overflow: hidden;
+    pointer-events: none;
+    /* Ne bloque pas les clics */
+}
+
+.orb {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(80px);
+    /* Flou artistique */
+    opacity: 0.4;
+    animation-timing-function: ease-in-out;
+    animation-iteration-count: infinite;
+}
+
+/* Orbe 1: Vert (Primary) */
+.orb-1 {
+    width: 600px;
+    height: 600px;
+    background: radial-gradient(circle, rgba(16, 185, 129, 0.4) 0%, rgba(16, 185, 129, 0) 70%);
+    top: -10%;
+    left: -10%;
+    animation: float1 15s infinite alternate;
+}
+
+/* Orbe 2: Bleu (Accent) */
+.orb-2 {
+    width: 500px;
+    height: 500px;
+    background: radial-gradient(circle, rgba(59, 130, 246, 0.3) 0%, rgba(59, 130, 246, 0) 70%);
+    bottom: -10%;
+    right: -10%;
+    animation: float2 20s infinite alternate;
+}
+
+/* Orbe 3: Jaune/Orange (Chaleur, subtil) */
+.orb-3 {
+    width: 300px;
+    height: 300px;
+    background: radial-gradient(circle, rgba(245, 158, 11, 0.2) 0%, rgba(245, 158, 11, 0) 70%);
+    top: 40%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    animation: float3 25s infinite alternate;
+}
+
+@keyframes float1 {
+    0% {
+        transform: translate(0, 0) scale(1);
+    }
+
+    100% {
+        transform: translate(50px, 100px) scale(1.1);
+    }
+}
+
+@keyframes float2 {
+    0% {
+        transform: translate(0, 0) scale(1);
+    }
+
+    100% {
+        transform: translate(-80px, -50px) scale(0.9);
+    }
+}
+
+@keyframes float3 {
+    0% {
+        transform: translate(-50%, -50%) scale(1);
+    }
+
+    50% {
+        transform: translate(-30%, -30%) scale(1.2);
+    }
+
+    100% {
+        transform: translate(-60%, -40%) scale(0.9);
+    }
+}
+
+/* =========================================
+   12. NOUVEAU WIDGET IA (STYLE WHATSAPP)
+   ========================================= */
+
+/* Réinitialisation de la fenêtre chat si nécessaire */
+.chatbot-window {
+    background: white;
+    font-family: 'Inter', sans-serif;
+    border: none;
+    display: none;
+    /* Toujours caché par défaut */
+    flex-direction: column;
+    /* Important: reset */
+}
+
+.chatbot-header {
+    background: var(--primary-gradient);
+    padding: 1rem;
+}
+
+.chat-messages {
+    background: #f9fafb;
+    gap: 15px;
+    padding: 1rem;
+}
+
+/* Styles des Bulles et Avatars */
+.chat-row {
+    display: flex;
+    align-items: flex-end;
+    gap: 10px;
+    margin-bottom: 8px;
+    width: 100%;
+}
+
+.chat-row.user-row {
+    flex-direction: row-reverse;
+    justify-content: flex-start;
+}
+
+.chat-row.bot-row {
+    flex-direction: row;
+    justify-content: flex-start;
+}
+
+.chat-avatar {
+    width: 35px;
+    height: 35px;
+    border-radius: 50%;
+    background-size: cover;
+    background-position: center;
+    border: 2px solid white;
+    box-shadow: var(--shadow-sm);
+    flex-shrink: 0;
+}
+
+/* URL des avatars (Icônes Flaticon directes) */
+.bot-avatar-img {
+    background-image: url('https://cdn-icons-png.flaticon.com/512/4712/4712027.png');
+    background-color: var(--secondary);
+}
+
+.user-avatar-img {
+    background-image: url('https://cdn-icons-png.flaticon.com/512/1077/1077114.png');
+    background-color: #e5e7eb;
+}
+
+.chat-bubble {
+    max-width: 75%;
+    padding: 10px 14px;
+    border-radius: 18px;
+    font-size: 0.95rem;
+    line-height: 1.4;
+    position: relative;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    word-wrap: break-word;
+}
+
+.chat-bubble.bot-bubble {
+    background: white;
+    color: var(--text-dark);
+    border-bottom-left-radius: 4px;
+    border: 1px solid #e5e7eb;
+}
+
+.chat-bubble.user-bubble {
+    background: var(--primary);
+    color: white;
+    border-bottom-right-radius: 4px;
+}
+
+.chat-time {
+    display: block;
+    font-size: 0.7rem;
+    margin-top: 4px;
+    opacity: 0.7;
+    text-align: right;
+}
+
+/* Animation de frappe */
+.typing-indicator {
+    display: flex;
+    gap: 4px;
+    padding: 5px 2px;
+}
+
+.typing-dot {
+    width: 6px;
+    height: 6px;
+    background: #9CA3AF;
+    border-radius: 50%;
+    animation: typing 1.4s infinite ease-in-out both;
+}
+
+.typing-dot:nth-child(1) {
+    animation-delay: -0.32s;
+}
+
+.typing-dot:nth-child(2) {
+    animation-delay: -0.16s;
+}
+
+@keyframes typing {
+
+    0%,
+    80%,
+    100% {
+        transform: scale(0);
+    }
+
+    40% {
+        transform: scale(1);
+    }
+}
+
+/* Masquer les anciens styles pour éviter les conflits visuels */
+.message,
+.bot-msg,
+.user-msg {
+    /* On les laisse au cas où mais les nouvelles classes prennent le dessus */
 }

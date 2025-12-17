@@ -1,98 +1,94 @@
-# EvoluCheck
+# 🌿 EvoluCheck - Audit de Maturité SI (Dimension 6)
 
-**EvoluCheck** est une application web d'audit conçue pour évaluer la **Dimension 6 (Évolutive)** des Systèmes d'Information (SI), conformément au référentiel **AuditS2I**. Elle permet aux auditeurs d'analyser la résilience, l'adaptabilité, l'innovation et la durabilité (Green IT) d'une organisation.
+**EvoluCheck** est une plateforme d'audit de nouvelle génération conçue pour évaluer la **Dimension 6 (Évolutive)** des Systèmes d'Information, basée sur le référentiel **AuditS2I**.
 
-Ce projet a été réalisé dans le cadre du **Master d'Excellence Audit et Contrôle de Gestion des SI (MS2I)**.
+Alliant expertise technique et design premium, elle permet aux organisations de mesurer leur **Adaptabilité**, leur **Innovation** et leur **Durabilité (Green IT)** à travers une interface fluide, animée et intelligente.
 
----
-
-## 🚀 Fonctionnalités Principales
-
-*   **Audit Assisté** : Formulaire interactif pour saisir les indicateurs clés (KPIs) des 3 piliers de la dimension évolutive :
-    *   **Adaptabilité** (Architecture, Dette Technique, Dépendance Fournisseur).
-    *   **Innovation** (Budget R&D, PoC, Taux de Transformation).
-    *   **Durabilité** (Green IT, PUE, Recyclage).
-*   **Tableau de Bord (Dashboard)** : Visualisation graphique des résultats via :
-    *   Un **Radar Chart** pour positionner l'entreprise sur les 3 axes.
-    *   La **Matrice de Farmer** pour cartographier les risques (Probabilité x Impact).
-*   **Diagnostic Expert & IA** : Génération automatique d'un rapport textuel avec des recommandations ciblées, enrichies par une **Intelligence Artificielle (OpenAI GPT)** via un chatbot intégré.
-*   **Export PDF** : Génération d'un rapport d'audit professionnel téléchargeable au format PDF.
-*   **Intégration n8n** : Connexion possible avec n8n pour l'automatisation de workflows (alertes, emails, CRM).
-*   **Import CSV** : Possibilité d'importer des données d'audit en masse depuis un fichier CSV.
+> Ce projet a été réalisé avec excellence dans le cadre du **Master MS2I** (Audit et Contrôle de Gestion des SI).
 
 ---
 
-## 🛠️ Prérequis Techniques
+## ✨ Fonctionnalités Clés & Innovation
 
-*   **Python** 3.8 ou supérieur.
-*   Un compte **OpenAI** (pour la clé API) si vous souhaitez activer le Chatbot IA.
-*   Un navigateur web moderne.
+### 🧠 1. Intelligence Artificielle "EvoluBot"
+*   **Assistant Expert** : Un chatbot intégré (basé sur OpenAI GPT-3.5) configuré avec un rôle d'expert senior en audit.
+*   **Interface Moderne** : Expérience de chat style "WhatsApp" avec avatars, indicateurs de frappe et horodatage.
+*   **Context-Aware** : L'IA connait vos scores d'audit en temps réel pour fournir des conseils personnalisés.
+
+### 🎨 2. Expérience Utilisateur (UX/UI) Premium
+*   **Design "Eco-Tech"** : Charte graphique moderne (Vert Émeraude & Glassmorphism) utilisant la police **Outfit** et **Inter**.
+*   **Authentification Split-Screen** : Page de connexion immersive avec visuel inspirant.
+*   **Animations Avancées** :
+    *   **Parallax Background** : Fond animé avec orbes flottantes réagissant à la souris.
+    *   **3D Tilt Effect** : Les cartes interactives s'inclinent au survol.
+    *   **AI Loader** : Écran de chargement immersif simulant le calcul des scores par l'IA.
+
+### 📊 3. Audit & Analyse Stratégique
+*   **Tableau de Bord Dynamique** : Visualisation des KPIs via **Radar Charts** et **Jauges**.
+*   **Gestion des Risques** : Génération automatique de la **Matrice de Farmer** (Probabilité x Impact).
+*   **Recommandations Automatisées** : Le système génère un diagnostic (FRAP/FRABOP) et des actions correctives précises.
+*   **Export PDF** : Rapport professionnel généré à la volée pour les comités de direction.
+
+### 🔌 4. Connectivité & Automatisation
+*   **Import CSV** : Ingestion de données en masse pour audit multi-sites.
+*   **Connecteur n8n** : Webhook natif pour envoyer les alertes vers des workflows externes (Emails, Slack, Teams).
 
 ---
 
-## 📦 Installation
+## 🛠️ Stack Technique
 
-1.  **Cloner le projet** (ou extraire l'archive) dans votre répertoire local.
+*   **Backend** : Python (Flask), SQLAlchemy (SQLite).
+*   **Frontend** : HTML5, CSS3 (Variables, Flexbox/Grid), JavaScript (Vanilla).
+*   **IA** : OpenAI API (GPT-3.5 Turbo).
+*   **Data Viz** : Matplotlib (Génération serveur), Chart.js (Interactive).
+*   **Outils** : n8n (Orchestration), FPDF (Génération de rapports).
 
-2.  **Créer un environnement virtuel** (recommandé) :
+---
+
+## 📦 Installation & Démarrage
+
+1.  **Prérequis** : Python 3.8+, Clé API OpenAI (Optionnel).
+
+2.  **Installation** :
     ```bash
+    git clone https://github.com/votre-repo/evolucheck.git
+    cd evolucheck
     python -m venv venv
-    # Activation sur Windows :
-    venv\Scripts\activate
-    # Activation sur Mac/Linux :
-    source venv/bin/activate
-    ```
-
-3.  **Installer les dépendances** :
-    ```bash
+    # Windows: venv\Scripts\activate
+    # Mac/Linux: source venv/bin/activate
     pip install -r requirements.txt
     ```
 
-4.  **Configuration** :
-    *   Renommez ou créez un fichier `.env` à la racine du projet.
-    *   Ajoutez votre clé API OpenAI :
-        ```env
-        OPENAI_API_KEY=votre_clé_api_ici
-        ```
+3.  **Configuration** :
+    Créez un fichier `.env` à la racine :
+    ```env
+    OPENAI_API_KEY=sk-votre-cle-api
+    GOOGLE_CLIENT_ID=votre-id (optionnel)
+    GOOGLE_CLIENT_SECRET=votre-secret (optionnel)
+    ```
 
----
-
-## ▶️ Démarrage
-
-1.  Lancez l'application Flask :
+4.  **Lancement** :
     ```bash
     flask run
     ```
-2.  Ouvrez votre navigateur et accédez à :
-    `http://127.0.0.1:5000`
+    Accédez à `http://127.0.0.1:5000`.
 
 ---
 
-## 📂 Structure du Projet
+## 👥 L'Équipe de Réalisation (Master MS2I)
 
-*   `app.py` : Le cœur de l'application (Backend Flask, Routes, Logique Métier).
-*   `templates/` : Fichiers HTML (Jinja2) pour l'interface utilisateur.
-*   `static/` : Feuilles de style CSS (`style.css`), Scripts JS (`script.js`) et Images.
-*   `instance/` : Base de données SQLite (`evolucheck.db`).
-*   `requirements.txt` : Liste des librairies Python requises.
+*   **BOUBOU Mohammed Amine**
+*   **EL-BAKKALI Aya**
+*   **AMHAJJAR Hiba**
+*   **FARAJI Nouhaila**
+*   **ZIANI Mariyam**
+*   **ZERHOUNI Amina**
+*   **RAHMANI Said**
+*   **LAMRHILI Imad-eddine**
 
----
-
-## 👥 Auteurs & Crédits
-
-**Encadrement :**
+**Encadrement Pédagogique :**
 *   Pr. El-attar Abdelilah
 *   Pr. Senhaji Zineb
-
-**Équipe Projet (Master MS2I) :**
-*   BOUBOU Mohammed Amine
-*   EL-BAKKALI Aya
-*   AMHAJJAR Hiba
-*   FARAJI Nouhaila
-*   ZIANI Mariyam
-*   ZERHOUNI Amina
-*   RAHMANI Said
-*   LAMRHILI Imad-eddine
 
 ---
 © 2025 FSJES - Master d'Excellence Audit SII

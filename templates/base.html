@@ -6,6 +6,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>EvoluCheck | Audit Dimension 6</title>
 
+    <!-- Google Fonts (Outfit & Inter) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Outfit:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet">
+
     <!-- CSS Personnalisé -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 
@@ -17,6 +24,13 @@
 </head>
 
 <body>
+
+    <!-- BACKGROUND ANIMÉ (Floating Orbs) -->
+    <div class="background-orbs">
+        <div class="orb orb-1"></div>
+        <div class="orb orb-2"></div>
+        <div class="orb orb-3"></div>
+    </div>
 
     <!-- NAVIGATION -->
     <nav class="navbar">
@@ -68,8 +82,13 @@
             <i class="fa-solid fa-times" style="cursor:pointer;" onclick="toggleChatbot()"></i>
         </div>
         <div class="chat-messages" id="chat-messages">
-            <div class="message bot-msg">
-                Bonjour ! Je suis l'expert IA d'AuditS2I. Posez-moi une question sur l'adaptabilité ou le Green IT.
+            <div class="chat-row bot-row">
+                <div class="chat-avatar bot-avatar-img"></div>
+                <div class="chat-bubble bot-bubble">
+                    Bonjour ! Je suis <strong>EvoluBot</strong>. Expert Audit SI & Green IT. Comment puis-je vous aider
+                    ?
+                    <span class="chat-time">À l'instant</span>
+                </div>
             </div>
         </div>
         <div class="chat-input">
@@ -85,6 +104,8 @@
 
     <!-- SCRIPTS JS -->
     <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/tilt.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/parallax.js') }}"></script>
 </body>
 
 </html>

@@ -3,35 +3,134 @@
 {% block content %}
 <!-- SECTION HÉROS (Bannière Principale) -->
 <section class="hero">
-    <h1>Auditez la Résilience et la Durabilité <br> de votre Système d'Information</h1>
+    <!-- Contenu Texte (Gauche) -->
+    <div class="hero-content">
+        <h1>Auditez la Résilience <br> & la <strong>Durabilité</strong> de votre SI</h1>
 
-    <p
-        style="font-size: 1.25rem; color: #6B7280; margin-bottom: 2.5rem; max-width: 800px; margin-left: auto; margin-right: auto;">
-        Une solution experte basée sur la <strong>Dimension 6 (Évolutive)</strong> du référentiel AuditS2I.
-        Évaluez l'adaptabilité architecturale, la capacité d'innovation et l'empreinte Green IT de votre organisation en
-        quelques clics.
-    </p>
+        <p style="font-size: 1.15rem; color: #6B7280; margin-bottom: 2.5rem; line-height: 1.8;">
+            Une solution experte basée sur la <strong>Dimension 6 (Évolutive)</strong> du référentiel AuditS2I.
+            Évaluez l'adaptabilité architecturale, l'innovation R&D et l'empreinte Green IT en un clin d'œil.
+        </p>
 
-    <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
-        {% if session.get('user') %}
-        <!-- Si connecté -->
-        <a href="{{ url_for('audit') }}" class="btn">
-            <i class="fa-solid fa-play"></i> Lancer un nouvel audit
-        </a>
-        {% else %}
-        <!-- Si non connecté -->
-        <a href="{{ url_for('auth') }}" class="btn">
-            Commencer l'analyse
-        </a>
-        <a href="{{ url_for('about') }}" class="btn btn-outline">
-            Découvrir le projet
-        </a>
-        {% endif %}
+        <div class="hero-buttons" style="display: flex; gap: 1rem; flex-wrap: wrap;">
+            {% if session.get('user') %}
+            <!-- Si connecté -->
+            <a href="{{ url_for('audit') }}" class="btn">
+                <i class="fa-solid fa-play"></i> Lancer l'audit
+            </a>
+            {% else %}
+            <!-- Si non connecté -->
+            <a href="{{ url_for('auth') }}" class="btn">
+                Commencer l'analyse
+            </a>
+            <a href="{{ url_for('about') }}" class="btn btn-outline">
+                En savoir plus
+            </a>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Visuel (Droite) -->
+    <div class="hero-visual">
+        <div class="visual-circle">
+            <!-- Icône Centrale -->
+            <i class="fa-solid fa-chart-pie main-icon"></i>
+
+            <!-- Éléments Flottants -->
+            <div class="float-icon f1"><i class="fa-solid fa-server"></i></div>
+            <div class="float-icon f2"><i class="fa-solid fa-leaf"></i></div>
+            <div class="float-icon f3"><i class="fa-solid fa-microchip"></i></div>
+        </div>
+    </div>
+</section>
+
+<!-- SECTION NORMES & RÉFÉRENTIELS -->
+<section class="standards-section">
+    <div class="standards-container">
+        <div class="standards-text">
+            <h2>Un Cadre Méthodologique de Pointe</h2>
+            <p>Notre matrice d'audit ne sort pas de nulle part. Elle est la synthèse rigoureuse des standards
+                internationaux les plus exigeants en matière de gouvernance IA et de gestion financière du cloud.</p>
+
+            <a href="https://www.iso.org/standard/77304.html" target="_blank" class="btn btn-outline"
+                style="font-size: 0.9rem; padding: 0.5rem 1rem;">
+                <i class="fa-solid fa-external-link-alt"></i> Consulter l'ISO 23894
+            </a>
+        </div>
+
+        <div class="standards-logos">
+            <!-- ISO/IEC 23894 -->
+            <div class="std-card">
+                <i class="fa-solid fa-scale-balanced std-icon"></i>
+                <span class="std-title">ISO/IEC 23894</span>
+                <span class="std-desc">Gestion des risques liés à l'IA</span>
+            </div>
+
+            <!-- FinOps -->
+            <div class="std-card">
+                <i class="fa-solid fa-coins std-icon"></i>
+                <span class="std-title">FinOps</span>
+                <span class="std-desc">Optimisation des coûts Cloud</span>
+            </div>
+
+            <!-- Green IT -->
+            <div class="std-card">
+                <i class="fa-solid fa-leaf std-icon"></i>
+                <span class="std-title">Green IT</span>
+                <span class="std-desc">Sobriété numérique (PUE)</span>
+            </div>
+
+            <!-- AuditS2I -->
+            <div class="std-card">
+                <i class="fa-solid fa-clipboard-check std-icon"></i>
+                <span class="std-title">AuditS2I</span>
+                <span class="std-desc">Référentiel Dimension 6</span>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- SECTION PROCESSUS (NOUVEAU) -->
+<section class="process-section">
+    <h2 style="font-size: 2.2rem; margin-bottom: 1rem;">Comment ça marche ?</h2>
+    <p style="color: var(--text-light); max-width: 600px; margin: 0 auto;">Un parcours simplifié pour transformer vos
+        données système en stratégie concrète.</p>
+
+    <div class="process-steps">
+        <!-- Étape 1 -->
+        <div class="step-card">
+            <div class="step-icon-box">
+                <i class="fa-solid fa-list-check"></i>
+                <div class="step-number">1</div>
+            </div>
+            <h3>Saisie</h3>
+            <p>Remplissez le formulaire intelligent sur vos pratiques techniques, R&D et écologiques.</p>
+        </div>
+
+        <!-- Étape 2 -->
+        <div class="step-card">
+            <div class="step-icon-box">
+                <i class="fa-solid fa-microchip"></i>
+                <div class="step-number">2</div>
+            </div>
+            <h3>Analyse</h3>
+            <p>Nos algorithmes comparent vos KPIs au référentiel AuditS2I Dimension 6.</p>
+        </div>
+
+        <!-- Étape 3 -->
+        <div class="step-card">
+            <div class="step-icon-box">
+                <i class="fa-solid fa-file-pdf"></i>
+                <div class="step-number">3</div>
+            </div>
+            <h3>Résultats</h3>
+            <p>Obtenez un score de maturité, des alertes de risques et un rapport PDF exportable.</p>
+        </div>
     </div>
 </section>
 
 <!-- SECTION LES 3 PILIERS (Dimension 6) -->
-<section class="features-grid">
+<section class="features-grid" id="tilt-container">
     <!-- Pilier 1 : Adaptabilité -->
     <div class="feature-card">
         <i class="fa-solid fa-layer-group feature-icon"></i>

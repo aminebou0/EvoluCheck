@@ -4,7 +4,7 @@
 <div style="text-align: center; margin-bottom: 3rem;">
     <h1 style="color: var(--primary-dark); margin-bottom: 1rem;">Le Cadre du Projet</h1>
     <p style="max-width: 700px; margin: 0 auto; color: var(--text-light); line-height: 1.6;">
-        Cette application a été réalisée dans le cadre du <strong>Master d'Excellence</strong>, pour le module 
+        Cette application a été réalisée dans le cadre du <strong>Master d'Excellence</strong>, pour le module
         <strong>Audit des Systèmes d'Information Intelligents</strong>.
         Elle matérialise notre étude approfondie de la Dimension 6 (Évolutive) du référentiel AuditS2I.
     </p>
@@ -13,12 +13,14 @@
 <!-- CARTE ENCADREMENT -->
 <div class="card" style="margin-bottom: 3rem; border-left: 5px solid var(--primary);">
     <div style="display: flex; align-items: center; gap: 15px;">
-        <div style="background: var(--secondary); width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--primary); font-size: 1.5rem;">
+        <div
+            style="background: var(--secondary); width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--primary); font-size: 1.5rem;">
             <i class="fa-solid fa-graduation-cap"></i>
         </div>
         <div>
             <h3 style="margin-bottom: 5px;">Encadrement Pédagogique</h3>
-            <p style="color: var(--text-dark);">Ce projet a été réalisé sous la supervision bienveillante de <strong>Pr. El-attar Abdelilah</strong> et <strong>Pr. Senhaji Zineb</strong>.</p>
+            <p style="color: var(--text-dark);">Ce projet a été réalisé sous la supervision bienveillante de <strong>Pr.
+                    El-attar Abdelilah</strong> et <strong>Pr. Senhaji Zineb</strong>.</p>
         </div>
     </div>
 </div>
@@ -27,12 +29,34 @@
 <h2 style="text-align: center; margin-bottom: 2rem;">L'Équipe de Réalisation</h2>
 <div class="team-grid">
     {% for member in team %}
-    <div class="team-card">
-        <div class="team-avatar">
-            {{ member[0] }} <!-- Affiche la première lettre du prénom -->
+    <div class="team-card" onclick="this.classList.toggle('active')">
+        <div class="team-img-container">
+            <!-- Photo (Avatar généré si pas de photo réelle) -->
+            <img src="{{ member.image }}" alt="{{ member.name }}" class="team-img">
+
+            <!-- Overlay Réseaux Sociaux (Apparaît au clic/hover) -->
+            <div class="team-overlay">
+                <div class="social-links">
+                    {% if member.socials.linkedin %}
+                    <a href="{{ member.socials.linkedin }}" target="_blank" title="LinkedIn"><i
+                            class="fa-brands fa-linkedin"></i></a>
+                    {% endif %}
+                    {% if member.socials.github %}
+                    <a href="{{ member.socials.github }}" target="_blank" title="GitHub"><i
+                            class="fa-brands fa-github"></i></a>
+                    {% endif %}
+                    {% if member.socials.email %}
+                    <a href="mailto:{{ member.socials.email }}" title="Email"><i class="fa-solid fa-envelope"></i></a>
+                    {% endif %}
+                </div>
+            </div>
         </div>
-        <h4 style="font-size: 1.1rem; margin-bottom: 5px;">{{ member }}</h4>
-        <p style="font-size: 0.9rem; color: var(--text-light);">Étudiant en Master d'Excellence - Audit SII</p>
+
+        <div class="team-info">
+            <h4>{{ member.name }}</h4>
+            <p class="role">{{ member.role }}</p>
+            <p class="click-hint"><i class="fa-solid fa-fingerprint"></i> Cliquer pour infos</p>
+        </div>
     </div>
     {% endfor %}
 </div>

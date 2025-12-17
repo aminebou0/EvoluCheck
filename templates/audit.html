@@ -125,8 +125,60 @@
     </div>
 </div>
 
-<!-- Script de secours pour forcer l'affichage du premier onglet -->
+<!-- OVERLAY DE CHARGEMENT IA -->
+<div id="ai-loader" class="loader-overlay">
+    <div class="loader-spinner"></div>
+    <div class="loader-text">Analyse en cours...</div>
+    <div class="loader-sub" id="loader-status">Connexion au moteur d'IA Dimension 6</div>
+</div>
+
+</div>
+
+<!-- Script de Gestion du Formulaire et Loader -->
 <script>
+    function openTab(evt, tabName) {
+        // Cacher tous les onglets
+        var i, tabcontent, tablinks;
+        tabcontent = document.getElementsByClassName("tab-content");
+        for (i = 0; i < tabcontent.length; i++) {
+            tabcontent[i].style.display = "none";
+            tabcontent[i].classList.remove("active");
+        }
+
+        // Désactiver les boutons
+        tablinks = document.getElementsByClassName("tab-btn");
+        for (i = 0; i < tablinks.length; i++) {
+            tablinks[i].classList.remove("active");
+        }
+
+        // Afficher l'onglet courant
+        document.getElementById(tabName).style.display = "block";
+        document.getElementById(tabName).classList.add("active");
+        evt.currentTarget.classList.add("active");
+    }
+
+    // Interception de la soumission pour afficher le loader IA
+    document.querySelector('form[action="{{ url_for("audit") }}"]').addEventListener('submit', function (e) {
+        e.preventDefault(); // On bloque l'envoi immédiat
+
+        const loader = document.getElementById('ai-loader');
+        const statusText = document.getElementById('loader-status');
+        const form = this; // Référence au formulaire
+
+        loader.style.display = 'flex'; // Afficher le loader
+
+        // Séquence d'animation "Fake AI"
+        setTimeout(() => { statusText.textContent = "Calcul des scores d'adaptabilité..."; }, 1000);
+        setTimeout(() => { statusText.textContent = "Vérification des critères Green IT..."; }, 2500);
+        setTimeout(() => { statusText.textContent = "Génération des recommandations..."; }, 4000);
+
+        // Envoi réel après 5 secondes
+        setTimeout(() => {
+            form.submit();
+        }, 5000);
+    });
+
+    // Initialisation
     document.addEventListener("DOMContentLoaded", function () {
         document.getElementById('tab-adapt').style.display = 'block';
     });

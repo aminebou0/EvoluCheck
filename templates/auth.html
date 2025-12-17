@@ -1,35 +1,38 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="auth-container">
-    <div class="card">
-        <div style="text-align: center; margin-bottom: 1.5rem;">
-            <img src="{{ url_for('static', filename='img/logo.png') }}" alt="Logo" style="height: 120px;"
-                onerror="this.style.display='none'">
-            <h2 style="color: var(--primary-dark); margin-top: 10px;">Bienvenue sur EvoluCheck</h2>
-            <p style="color: var(--text-light);" id="auth-subtitle">Connectez-vous pour accéder aux outils d'audit</p>
+<div class="auth-wrapper">
+    <!-- Partie Gauche : Visuel Inspirant -->
+    <div class="auth-visual">
+        <div class="auth-quote">
+            <h3>"L'avenir appartient à ceux qui auditent."</h3>
+            <p>Rejoignez la communauté des experts EvoluCheck pour un SI plus résilient et durable.</p>
+        </div>
+    </div>
+
+    <!-- Partie Droite : Formulaire -->
+    <div class="auth-form-container">
+        <div class="auth-header">
+            <img src="{{ url_for('static', filename='img/logo.png') }}" alt="Logo" onerror="this.style.display='none'">
+            <h2>Bienvenue</h2>
+            <p id="auth-subtitle">Accédez à votre espace d'audit</p>
         </div>
 
-        <!-- BOUTONS SOCIAL LOGIN (Visibles sur les deux formulaires) -->
+        <!-- BOUTONS SOCIAL LOGIN -->
         <div id="social-login-section">
             <a href="{{ url_for('login_google') }}" class="social-btn">
-                <i class="fa-brands fa-google" style="color: #DB4437;"></i> Continuer avec Google
+                <i class="fa-brands fa-google" style="color: #DB4437;"></i> Google
             </a>
-            <!-- LinkedIn désactivé
-            <a href="#" class="social-btn">
-                <i class="fa-brands fa-linkedin" style="color: #0077B5;"></i> Continuer avec LinkedIn
-            </a>
-            -->
-            <div class="divider">OU AVEC EMAIL</div>
+            <div class="divider">OU</div>
         </div>
 
-        <!-- FORMULAIRE DE CONNEXION (Visible par défaut) -->
+        <!-- FORMULAIRE DE CONNEXION -->
         <div id="login-block">
             <form method="POST" action="{{ url_for('auth') }}">
                 <input type="hidden" name="action" value="login">
                 <div class="form-group">
-                    <label>Adresse Email</label>
-                    <input type="email" name="email" class="form-control" placeholder="exemple@entreprise.com" required>
+                    <label>Email</label>
+                    <input type="email" name="email" class="form-control" placeholder="exemple@mail.com" required>
                 </div>
                 <div class="form-group">
                     <label>Mot de passe</label>
@@ -37,40 +40,35 @@
                 </div>
                 <button type="submit" class="btn" style="width: 100%;">Se connecter</button>
             </form>
-            <p style="color: var(--text-light); font-size: 0.9rem; margin-top: 1rem; text-align: center;">
-                Pas encore de compte ? <a href="javascript:void(0)" onclick="toggleAuth('register')"
-                    style="color: var(--primary); font-weight: bold;">S'inscrire</a>
+            <p style="text-align: center; margin-top: 1.5rem; color: var(--text-light); font-size: 0.9rem;">
+                Nouveau ici ? <a href="javascript:void(0)" onclick="toggleAuth('register')"
+                    style="color: var(--primary); font-weight: 700;">Créer un compte</a>
             </p>
         </div>
 
-        <!-- FORMULAIRE D'INSCRIPTION (Caché par défaut) -->
+        <!-- FORMULAIRE D'INSCRIPTION -->
         <div id="register-block" style="display: none;">
             <form method="POST" action="{{ url_for('auth') }}">
                 <input type="hidden" name="action" value="register">
                 <div class="form-group">
-                    <label>Nom Complet</label>
+                    <label>Nom complet</label>
                     <input type="text" name="fullname" class="form-control" placeholder="Prénom Nom" required>
                 </div>
                 <div class="form-group">
-                    <label>Adresse Email</label>
-                    <input type="email" name="email" class="form-control" placeholder="exemple@entreprise.com" required>
+                    <label>Email</label>
+                    <input type="email" name="email" class="form-control" placeholder="exemple@mail.com" required>
                 </div>
                 <div class="form-group">
                     <label>Mot de passe</label>
                     <input type="password" name="password" class="form-control" placeholder="••••••••" required>
                 </div>
-                <div class="form-group">
-                    <label>Confirmer le mot de passe</label>
-                    <input type="password" name="confirm_password" class="form-control" placeholder="••••••••" required>
-                </div>
-                <button type="submit" class="btn" style="width: 100%;">Créer mon compte</button>
+                <button type="submit" class="btn" style="width: 100%;">S'inscrire</button>
             </form>
-            <p style="color: var(--text-light); font-size: 0.9rem; margin-top: 1rem; text-align: center;">
-                Déjà un compte ? <a href="javascript:void(0)" onclick="toggleAuth('login')"
-                    style="color: var(--primary); font-weight: bold;">Se connecter</a>
+            <p style="text-align: center; margin-top: 1.5rem; color: var(--text-light); font-size: 0.9rem;">
+                Déjà membre ? <a href="javascript:void(0)" onclick="toggleAuth('login')"
+                    style="color: var(--primary); font-weight: 700;">Connexion</a>
             </p>
         </div>
-
     </div>
 </div>
 

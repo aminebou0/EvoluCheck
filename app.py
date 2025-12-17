@@ -155,7 +155,7 @@ def envoyer_alerte_n8n(data_audit):
     Envoie les données de l'audit à n8n via un Webhook.
     """
     # 1. VOTRE URL N8N SPÉCIFIQUE
-    N8N_WEBHOOK_URL = "https://magana12.app.n8n.cloud/webhook-test/audit-alert"
+    N8N_WEBHOOK_URL = "https://amineboubou12.app.n8n.cloud/webhook-test/audit-alert"
     
     print(f"--- Tentative d'envoi vers n8n (URL: {N8N_WEBHOOK_URL}) ---")
     
@@ -286,7 +286,12 @@ def get_ai_response(msg, context=None):
     """Chatbot Intelligent via OpenAI avec Contexte Audit"""
     if not client: return "Erreur : Clé API non configurée dans le fichier .env"
     try:
-        system_prompt = "Tu es l'Expert IA 'EvoluCheck'. Directives : Adaptabilité (Microservices), Innovation (R&D > 5%), Durabilité (PUE < 1.4). Sois concis, professionnel et empathique."
+        system_prompt = (
+            "Tu es 'EvoluBot', l'expert senior en audit informatique (SI) spécialisé dans le référentiel AuditS2I, "
+            "la norme ISO 23894 (Gestion des risques IA) et le Green IT (FinOps/PUE). "
+            "Ton ton est professionnel, précis, mais pédagogique. Tu vouvoies l'utilisateur. "
+            "Tes réponses doivent être structurées et courtes. Ne parle QUE d'audit, de tech et de management SI."
+        )
         
         if context:
             system_prompt += f"\n\nCONTEXTE DE L'AUDIT UTILISATEUR :\n{context}\n\nUtilise ces données pour personnaliser tes réponses."
@@ -307,7 +312,79 @@ def index():
 
 @app.route('/about')
 def about():
-    team = ["BOUBOU Mohammed Amine", "EL-BAKKALI Aya", "AMHAJJAR Hiba", "FARAJI Nouhaila", "ZIANI Mariyam", "ZERHOUNI Amina", "RAHMANI Said", "LAMRHILI Imad-eddine"]
+    team = [
+        {
+            "name": "BOUBOU Mohammed Amine",
+            "role": "Étudiant en Master d'Excellence MS2I",
+            "image": url_for('static', filename='img/team/amine.png'),
+            "socials": {
+                "linkedin": "https://www.linkedin.com/in/mohammed-amine-boubou-32a249223/",
+                "github": "https://github.com/aminebou0",
+                "email": "amineboubou02@gmail.com"
+            }
+        },
+        {
+            "name": "EL-BAKKALI Aya",
+            "role": "Étudiante en Master d'Excellence MS2I",
+            "image": url_for('static', filename='img/team/aya.png'),
+            "socials": {
+                "linkedin": "https://www.linkedin.com/in/aya-el-bakkali-b2692630a/",
+                "email": "eaya78726@gmail.com"
+            }
+        },
+        {
+            "name": "AMHAJJAR Hiba",
+            "role": "Étudiante en Master d'Excellence MS2I",
+            "image": url_for('static', filename='img/team/hiba.jpeg'),
+            "socials": {
+                "linkedin": "https://www.linkedin.com/in/hiba-amhajjar-21946a361/",
+                "email": "hibaamh59@gmail.com"
+            }
+        },
+        {
+            "name": "FARAJI Nouhaila",
+            "role": "Étudiante en Master d'Excellence MS2I",
+            "image": url_for('static', filename='img/team/nouhaila.png'),
+            "socials": {
+                "linkedin": "https://www.linkedin.com/in/nouhaila-faraji-635943352/",
+                "email": "nouhailafaraji7@gmail.com"
+            }
+        },
+        {
+            "name": "ZIANI Mariyam",
+            "role": "Étudiante en Master d'Excellence MS2I",
+            "image": url_for('static', filename='img/team/mariyam.png'),
+            "socials": {
+                "linkedin": "https://www.linkedin.com/in/mariyam-ziani-7321442b8/",
+                "email": "mariyam8ziani@gmail.com"
+            }
+        },
+        {
+            "name": "ZERHOUNI Amina",
+            "role": "Étudiante en Master d'Excellence MS2I",
+            "image": url_for('static', filename='img/team/amina.png'),
+            "socials": {
+                "linkedin": "https://www.linkedin.com/in/amina-zerhouni-8b1077204/",
+                "email": "aminazerhouni78@gmail.com"
+            }
+        },
+        {
+            "name": "RAHMANI Said",
+            "role": "Étudiant en Master d'Excellence MS2I",
+            "image": url_for('static', filename='img/team/said.png'),
+            "socials": {
+                "linkedin": "https://www.linkedin.com/in/saiid-rahmanii/"
+            }
+        },
+        {
+            "name": "LAMRHILI Imad-eddine",
+            "role": "Étudiant en Master d'Excellence MS2I",
+            "image": url_for('static', filename='img/team/imad.png'),
+            "socials": {
+                "email": "imadlamrhili71@gmail.com"
+            }
+        }
+    ]
     return render_template('about.html', team=team)
 
 @app.route('/contact')
