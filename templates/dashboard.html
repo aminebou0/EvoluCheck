@@ -29,8 +29,15 @@
         </div>
     </div>
 
-    <!-- BOUTON EXPORT PDF -->
-    <div style="text-align: right; margin-bottom: 2rem;">
+    <!-- ACTIONS (PDF & N8N) -->
+    <div style="display: flex; gap: 1rem; justify-content: flex-end; margin-bottom: 2rem;">
+        <!-- Bouton N8N -->
+        <a href="https://amineboubou12.app.n8n.cloud/" target="_blank" class="btn"
+            style="background-color: #EA580C; color: white; padding: 10px 20px; text-decoration: none; border-radius: 8px; font-weight: 600;">
+            <i class="fa-solid fa-bolt"></i> Accéder au Workflow n8n
+        </a>
+
+        <!-- Bouton PDF -->
         <a href="{{ url_for('export_pdf') }}" class="btn"
             style="background-color: #EF4444; color: white; padding: 10px 20px; text-decoration: none; border-radius: 8px; font-weight: 600;">
             <i class="fa-solid fa-file-pdf"></i> Télécharger le Rapport Complet

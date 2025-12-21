@@ -326,7 +326,7 @@ def about():
         {
             "name": "EL-BAKKALI Aya",
             "role": "Étudiante en Master d'Excellence MS2I",
-            "image": url_for('static', filename='img/team/aya.png'),
+            "image": url_for('static', filename='img/team/aya.jpeg'),
             "socials": {
                 "linkedin": "https://www.linkedin.com/in/aya-el-bakkali-b2692630a/",
                 "email": "eaya78726@gmail.com"
