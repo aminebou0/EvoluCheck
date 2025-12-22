@@ -2,21 +2,211 @@
 
 {% block content %}
 <div style="max-width: 800px; margin: 0 auto;">
+    <style>
+        /* Styles pour le Step Wizard */
+        .step-wizard {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 3rem;
+            position: relative;
+            padding: 0 1rem;
+        }
+
+        .step-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            cursor: pointer;
+            z-index: 2;
+            position: relative;
+            width: 120px;
+        }
+
+        .step-circle {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            background: #f1f5f9;
+            color: #64748b;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1.1rem;
+            margin-bottom: 0.5rem;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 3px solid #fff;
+            box-shadow: 0 0 0 4px #e2e8f0;
+        }
+
+        .step-item.active .step-circle {
+            background: var(--primary);
+            color: white;
+            box-shadow: 0 0 0 4px var(--secondary);
+            transform: scale(1.1);
+        }
+
+        .step-label {
+            font-size: 0.9rem;
+            color: var(--text-light);
+            font-weight: 500;
+            transition: color 0.3s;
+        }
+
+        .step-item.active .step-label {
+            color: var(--primary-dark);
+            font-weight: 700;
+        }
+
+        /* Ligne connectrice */
+        .step-line {
+            position: absolute;
+            top: 22px;
+            left: 50px;
+            right: 50px;
+            height: 3px;
+            background: #e2e8f0;
+            z-index: 1;
+        }
+
+        /* Styles pour les Sélecteurs Visuels & Toggles */
+        .selection-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+        }
+
+        .selection-card {
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 1rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: white;
+            color: #64748b;
+        }
+
+        .selection-card:hover {
+            border-color: #cbd5e1;
+            background: #f8fafc;
+        }
+
+        .selection-card.selected {
+            border-color: var(--primary);
+            background: var(--secondary);
+            color: var(--primary-dark);
+            font-weight: bold;
+            box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.2);
+        }
+
+        /* Toggle Switch */
+        .toggle-container {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            cursor: pointer;
+        }
+
+        .toggle-switch {
+            width: 50px;
+            height: 28px;
+            background: #cbd5e1;
+            border-radius: 50px;
+            position: relative;
+            transition: background 0.3s;
+        }
+
+        .toggle-switch::after {
+            content: '';
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 24px;
+            height: 24px;
+            background: white;
+            border-radius: 50%;
+            transition: transform 0.3s;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .toggle-input:checked+.toggle-switch {
+            background: var(--primary);
+        }
+
+        .toggle-input:checked+.toggle-switch::after {
+            transform: translateX(22px);
+        }
+
+        .toggle-input {
+            display: none;
+        }
+
+        .toggle-label {
+            font-weight: 500;
+            color: var(--text-dark);
+        }
+    </style>
+    <script>
+        // Fonction simple pour gérer la sélection visuelle des cartes
+        function selectCard(inputName, value, element) {
+            // Mettre à jour l'input caché
+            document.querySelector(`input[name="${inputName}"]`).value = value;
+
+            // Mettre à jour le style visuel
+            const container = element.parentElement;
+            const cards = container.querySelectorAll('.selection-card');
+            cards.forEach(c => c.classList.remove('selected'));
+            element.classList.add('selected');
+        }
+    </script>
+    <style>
+        .tab-content {
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
     <h2 style="margin-bottom: 1.5rem; color: var(--primary-dark);">Nouvel Audit : Dimension Évolutive</h2>
 
     <div class="card">
         <!-- IMPORT CSV -->
-        <div
-            style="margin-bottom: 2rem; padding: 1rem; border: 1px dashed #ccc; border-radius: 8px; background-color: #f9f9f9;">
-            <h3 style="margin-top: 0; font-size: 1.1rem;">Import Automatique (CSV)</h3>
+        <!-- IMPORT CSV MODERNISÉ -->
+        <div style="margin-bottom: 2rem; padding: 2rem; border: 2px dashed #cbd5e1; border-radius: 12px; background-color: #f8fafc; text-align: center; transition: all 0.3s ease;"
+            onmouseover="this.style.borderColor='#4F46E5'; this.style.backgroundColor='#eef2ff';"
+            onmouseout="this.style.borderColor='#cbd5e1'; this.style.backgroundColor='#f8fafc';">
+
+            <div style="margin-bottom: 1rem; color: #4F46E5; font-size: 2rem;">
+                <i class="fa-solid fa-cloud-arrow-up"></i>
+            </div>
+
+            <h3 style="margin-top: 0; font-size: 1.2rem; color: #1e293b; margin-bottom: 0.5rem;">Import Automatique
+                (CSV)</h3>
+            <p style="color: #64748b; margin-bottom: 1.5rem; font-size: 0.9rem;">Glissez votre fichier ou cliquez pour
+                parcourir</p>
+
             <form method="POST" action="{{ url_for('import_csv') }}" enctype="multipart/form-data"
-                style="display: flex; gap: 1rem; align-items: center;">
-                <input type="file" name="file" accept=".csv" required class="form-control" style="flex: 1;">
-                <button type="submit" class="btn" style="background-color: #4F46E5; color: white;">
+                style="display: flex; gap: 1rem; align-items: center; justify-content: center; flex-wrap: wrap;">
+                <input type="file" name="file" accept=".csv" required class="form-control"
+                    style="flex: 1; max-width: 300px; padding: 10px;">
+                <button type="submit" class="btn"
+                    style="background-color: #4F46E5; color: white; padding: 10px 20px; border-radius: 8px; border:none; cursor: pointer; transition: transform 0.2s;"
+                    onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
                     <i class="fa-solid fa-file-csv"></i> Importer
                 </button>
             </form>
-            <small style="color: #666; display: block; margin-top: 0.5rem;">
+            <small style="color: #94a3b8; display: block; margin-top: 1rem; font-size: 0.8rem;">
                 Colonnes attendues : dep_fournisseur, temps_deploy, arch_modulaire, budget_rd, nb_poc, pue, recyclage,
                 dette_technique, taux_transformation, energie_verte
             </small>
@@ -24,17 +214,27 @@
 
         <form method="POST" action="{{ url_for('audit') }}">
 
-            <!-- Navigation des Onglets -->
-            <div class="tabs">
-                <button type="button" class="tab-btn active" onclick="openTab(event, 'tab-adapt')">
-                    <i class="fa-solid fa-layer-group"></i> Adaptabilité
-                </button>
-                <button type="button" class="tab-btn" onclick="openTab(event, 'tab-innov')">
-                    <i class="fa-regular fa-lightbulb"></i> Innovation
-                </button>
-                <button type="button" class="tab-btn" onclick="openTab(event, 'tab-green')">
-                    <i class="fa-solid fa-leaf"></i> Durabilité (Green IT)
-                </button>
+            <!-- STEP WIZARD (Barre de Progression) -->
+            <div class="step-wizard">
+                <div class="step-line"></div>
+
+                <!-- Étape 1 -->
+                <div class="step-item active" onclick="switchTab('tab-adapt')">
+                    <div class="step-circle">1</div>
+                    <div class="step-label">Adaptabilité</div>
+                </div>
+
+                <!-- Étape 2 -->
+                <div class="step-item" onclick="switchTab('tab-innov')">
+                    <div class="step-circle">2</div>
+                    <div class="step-label">Innovation</div>
+                </div>
+
+                <!-- Étape 3 -->
+                <div class="step-item" onclick="switchTab('tab-green')">
+                    <div class="step-circle">3</div>
+                    <div class="step-label">Durabilité</div>
+                </div>
             </div>
 
             <!-- CONTENU ONGLET 1 : ADAPTABILITÉ -->
@@ -53,19 +253,38 @@
                     <input type="number" name="temps_deploy" class="form-control" placeholder="Ex: 20" required>
                 </div>
                 <div class="form-group">
-                    <label>L'architecture est-elle modulaire ?</label>
-                    <select name="arch_modulaire" class="form-control">
-                        <option value="non">Non (Monolithique)</option>
-                        <option value="oui">Oui (Microservices)</option>
-                    </select>
+                    <label style="margin-bottom: 0.8rem; display: block;">L'architecture est-elle modulaire ?</label>
+                    <label class="toggle-container">
+                        <input type="checkbox" name="arch_modulaire_checkbox" class="toggle-input"
+                            onchange="this.checked ? document.getElementsByName('arch_modulaire')[0].value='oui' : document.getElementsByName('arch_modulaire')[0].value='non'">
+                        <div class="toggle-switch"></div>
+                        <span class="toggle-label">Oui, Microservices</span>
+                    </label>
+                    <input type="hidden" name="arch_modulaire" value="non"> <!-- Valeur par défaut -->
                 </div>
                 <div class="form-group">
-                    <label>Niveau de Dette Technique</label>
-                    <select name="dette_technique" class="form-control">
-                        <option value="faible">Faible</option>
-                        <option value="moyenne" selected>Moyenne</option>
-                        <option value="critique">Critique (Impact Négatif)</option>
-                    </select>
+                    <label style="margin-bottom: 0.8rem; display: block;">Niveau de Dette Technique</label>
+                    <input type="hidden" name="dette_technique" value="moyenne"> <!-- Valeur par défaut -->
+                    <div class="selection-grid">
+                        <div class="selection-card" onclick="selectCard('dette_technique', 'faible', this)">
+                            <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">😊</div>
+                            Faible
+                        </div>
+                        <div class="selection-card selected" onclick="selectCard('dette_technique', 'moyenne', this)">
+                            <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">😐</div>
+                            Moyenne
+                        </div>
+                        <div class="selection-card" onclick="selectCard('dette_technique', 'critique', this)">
+                            <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">😫</div>
+                            Critique
+                        </div>
+                    </div>
+                </div>
+                <div style="text-align: right; margin-top: 1.5rem;">
+                    <button type="button" class="btn" onclick="switchTab('tab-innov')"
+                        style="background-color: #e2e8f0; color: #475569; font-weight: 600; border-radius: 8px; padding: 0.5rem 1rem;">
+                        Suivant <i class="fa-solid fa-arrow-right"></i>
+                    </button>
                 </div>
             </div>
 
@@ -91,6 +310,16 @@
                     <input type="number" step="0.1" name="taux_transformation_poc" class="form-control"
                         placeholder="Ex: 45">
                 </div>
+                <div style="display: flex; justify-content: space-between; margin-top: 1.5rem;">
+                    <button type="button" class="btn" onclick="switchTab('tab-adapt')"
+                        style="background-color: transparent; color: #64748b; border: 1px solid #cbd5e1; border-radius: 8px; padding: 0.5rem 1rem;">
+                        <i class="fa-solid fa-arrow-left"></i> Précédent
+                    </button>
+                    <button type="button" class="btn" onclick="switchTab('tab-green')"
+                        style="background-color: #e2e8f0; color: #475569; font-weight: 600; border-radius: 8px; padding: 0.5rem 1rem;">
+                        Suivant <i class="fa-solid fa-arrow-right"></i>
+                    </button>
+                </div>
             </div>
 
             <!-- CONTENU ONGLET 3 : DURABILITÉ -->
@@ -101,11 +330,14 @@
                     <input type="number" step="0.01" name="pue" class="form-control" placeholder="Ex: 1.8" required>
                 </div>
                 <div class="form-group">
-                    <label>Politique de recyclage active ?</label>
-                    <select name="recyclage" class="form-control">
-                        <option value="non">Non</option>
-                        <option value="oui">Oui</option>
-                    </select>
+                    <label style="margin-bottom: 0.8rem; display: block;">Politique de recyclage active ?</label>
+                    <label class="toggle-container">
+                        <input type="checkbox" name="recyclage_checkbox" class="toggle-input"
+                            onchange="this.checked ? document.getElementsByName('recyclage')[0].value='oui' : document.getElementsByName('recyclage')[0].value='non'">
+                        <div class="toggle-switch"></div>
+                        <span class="toggle-label">Oui, activée</span>
+                    </label>
+                    <input type="hidden" name="recyclage" value="non">
                 </div>
                 <div class="form-group">
                     <label>Part d'Énergie Verte (%)</label>
@@ -155,6 +387,35 @@
         document.getElementById(tabName).style.display = "block";
         document.getElementById(tabName).classList.add("active");
         evt.currentTarget.classList.add("active");
+    }
+
+    // Nouvelle fonction de navigation avec Step Wizard
+    function switchTab(tabName) {
+        // 1. Masquer tous les contenus
+        var tabcontent = document.getElementsByClassName("tab-content");
+        for (var i = 0; i < tabcontent.length; i++) {
+            tabcontent[i].style.display = "none";
+            tabcontent[i].classList.remove("active");
+        }
+
+        // 2. Mettre à jour la barre de progression (wizard)
+        var steps = document.getElementsByClassName("step-item");
+        for (var i = 0; i < steps.length; i++) {
+            steps[i].classList.remove("active");
+        }
+
+        // 3. Activer le bon contenu
+        document.getElementById(tabName).style.display = "block";
+        document.getElementById(tabName).classList.add("active");
+
+        // 4. Activer la bonne étape visuelle
+        var index = 0;
+        if (tabName === 'tab-innov') index = 1;
+        if (tabName === 'tab-green') index = 2;
+
+        if (steps[index]) {
+            steps[index].classList.add("active");
+        }
     }
 
     // Interception de la soumission pour afficher le loader IA
